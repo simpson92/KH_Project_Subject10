@@ -1,0 +1,22 @@
+[project]
+name = "subject10-pose-action"
+version = "0.1.0"
+description = "Subject 10 - 2D Pose Estimation and Action Analysis"
+requires-python = ">=3.11"
+dependencies = [
+    "ultralytics",
+    "opencv-python",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "joblib",
+    "matplotlib",
+    "torch",
+    "tqdm",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]

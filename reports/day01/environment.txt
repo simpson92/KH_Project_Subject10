@@ -1,0 +1,9 @@
+Python: 3.12.16
+Platform: Linux-6.18.58.1-microsoft-standard-WSL2-x86_64-with-glibc2.43
+OpenCV: 5.0.0
+PyTorch: 2.15.0+cu132
+Ultralytics: 8.4.203
+CUDA available: True
+PyTorch CUDA: 13.2
+GPU: NVIDIA GeForce RTX 3060
+Selected device: 0
