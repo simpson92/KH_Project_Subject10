@@ -1,0 +1,4 @@
+videos=100 subjects=5 labels=['pushing', 'ufoul']
+frames=32 kp_conf=0.5 trees=300
+accuracy=0.9900
+macro_f1=0.9900

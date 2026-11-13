@@ -42,3 +42,5 @@ Thumbs.db
 
 # Generated Day02 pose tables
 reports/day02/tables/*.csv
+
+reports/referee/smoke/keypoints/
