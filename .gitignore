@@ -1,0 +1,44 @@
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# Environment files
+.env
+
+# Raw data
+data/
+
+# Images and videos
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+*.mov
+
+# AI models
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Training outputs
+runs/
+weights/
+checkpoints/
+artifacts/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated Day02 pose tables
+reports/day02/tables/*.csv
