@@ -289,6 +289,7 @@ Feature가 시간에 따라 변하는 모습을 확인했습니다.
 | `src/pose_utils.py` `select_main_person()` | 여러 사람이 보이면 대표 인물 선택 (`area` = 가장 큰 BBox, D6 결정값 · `conf` · `first`) | 18번 `--main-person area` (기본) |
 | `scripts/18_video_frame_features.py` | D6 반영. CSV 맨 뒤에 `people` · `person_index` 열 추가 (38-D 열 위치는 그대로). 교재 결과 재현은 `--main-person first` | |
 | `scripts/day03_plot_feature_timeline.py` | 18번 CSV 1~4개 → `wrist − nose` · 팔꿈치 각도 · 어깨 폭 그래프, 앞 Frame 대비 \|Δ각도\| ≥ 40°인 Frame을 `feature_spikes.csv`로 저장 | 아래 |
+| `scripts/day03_batch_video_qa.py` | 스모크 영상 전체에 18번(38-D) · 17번(U파울 규칙) · 튐 탐지를 한 번에 실행 → 영상별 `video_qa.csv` (유효 Frame 비율, 다른 사람 등장, 어깨 폭 변화, 규칙 판정, PASS/REVIEW) + 사람 × 동작별 규칙 정답률 | `python scripts/day03_batch_video_qa.py` |
 
 ```bash
 python scripts/day03_plot_feature_timeline.py \
