@@ -14,7 +14,7 @@ docs/referee/01_관절_매핑_명세.md
 
 실행:
     uv run python scripts/vicon_01_extract_3d_json.py
-    uv run python scripts/vicon_01_extract_3d_json.py --clip P001_A002_T03 --overwrite
+    uv run python scripts/vicon_01_extract_3d_json.py --clip T01_S00_A02_T03_vicon --overwrite
 
 --clip로 일부만 실행하면 리포트에도 그 Take만 기록됨 (전체 리포트는 옵션 없이 다시 실행)
 """
@@ -238,7 +238,7 @@ def main() -> int:
         if glb is None:
             line.update(status="MISSING", message=f"GLB 없음: {stem}.glb")
             report.append(line)
-            print(f"{row['clip_id']:<15} MISSING  {stem}.glb")
+            print(f"{row['clip_id']:<22} MISSING  {stem}.glb")
             continue
 
         line["source_glb"] = glb.name
@@ -254,7 +254,7 @@ def main() -> int:
         ) as exc:  # 파일 손상 등
             line.update(status="FAIL", message=f"읽기 오류: {exc}")
             report.append(line)
-            print(f"{row['clip_id']:<15} FAIL     {exc}")
+            print(f"{row['clip_id']:<22} FAIL     {exc}")
             continue
 
         ok = check["V01"] and check["V02"] and check["V03"]
@@ -288,7 +288,7 @@ def main() -> int:
         )
         report.append(line)
         print(
-            f"{row['clip_id']:<15} {line['status']:<8} {motion.frame_count:>4}f "
+            f"{row['clip_id']:<22} {line['status']:<8} {motion.frame_count:>4}f "
             f"향한각 {line['facing_deg']:>7}° T-pose {line['start_tpose']!s:<5} {saved}"
         )
 
