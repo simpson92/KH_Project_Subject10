@@ -294,9 +294,12 @@ Feature가 시간에 따라 변하는 모습을 확인했습니다.
 
 | 경로 | 내용 |
 | --- | --- |
+| `docs/referee/00_배포노트.md` | 배포별 변경 요약 · 회의 안건 · 버전 규칙 (현재 2차 배포 = 문서 전체 v2.0) |
 | `docs/referee/01_관절_매핑_명세.md` | VICON → COCO 17(+손등 2) 관절 매핑, 결정 사항 D1~D6 |
 | `docs/referee/02_라벨링_가이드.md` | 신호 클래스(A01~A15, C01, N00) 라벨링 규칙 |
 | `docs/referee/03_웹캠_촬영_계획서.md` | 웹캠 촬영 계획 |
 | `docs/referee/04_특징_모델_설계서.md` | Feature · 모델 설계 |
+| `docs/referee/05_시스템_아키텍처.md` | 실시간 시스템 구성 (웹캠 → FastAPI → 화면), API, 디렉터리 |
+| `docs/referee/doc_versions.csv` | 설계 문서 버전 기록 (버전 · 날짜 · 작성자 · 커밋 · 내용) |
 | `scripts/vicon_00_make_take_log.py` · `vicon_01_extract_3d_json.py` | VICON 촬영 파일 정리, GLB → 3D JSON 추출 |
 | `scripts/referee_00~04_*.py` · `reports/referee/smoke/` | 간이 검증용 스모크 테스트 (본 Pipeline 아님) |

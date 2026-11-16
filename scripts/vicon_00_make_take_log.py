@@ -2,7 +2,7 @@
 
 규칙 (docs/referee/01_관절_매핑_명세.md 7.1, 7.4):
 - 원본 이름: 261111_E002_V2_T001_KHM.fbx  (날짜_E동작[_V변형]_T테이크_배우)
-- clip_id  : P001_A002_T03                (사람_동작_테이크)
+- clip_id  : T01_S00_A02_T03_vicon        (팀_사람_동작_테이크_출처) — 수업 4일차 T01_S01_A01_T01 형식 + 출처
 - T 번호는 사람·동작마다 01부터 다시 매김. 순서 = V 없음 → V1 → V2 → V3 → ..., 같은 V 안에서는 원본 T 순서
 - V(제자리/이동 등)는 clip_id에 넣지 않고 variant 칸에 기록
 - E016·E017 = 대표 라벨 N00, E018~E024(펜싱) = use N
@@ -30,9 +30,14 @@ NAME_RE = re.compile(
     r"^(?P<date>\d{6})_E(?P<e>\d{3})(?:_V(?P<v>\d+))?_T(?P<t>\d{3})_(?P<actor>[A-Za-z]+)$"
 )
 
-# 배우 약칭 → person_id. 새 배우가 생기면 여기에 추가
+# 수업 4일차 clip_id 형식: T01(1조)_S##(사람)_A##(동작)_T##(테이크). VICON은 끝에 _vicon
+TEAM_ID = "T01"
+SOURCE_TAG = "vicon"
+
+# 배우 약칭 → subject_id (S##). 새 배우가 생기면 여기에 추가
+# 한 사람 = 한 S번호: 배우가 웹캠에도 찍혔으면 웹캠과 같은 S번호로 바꿀 것 (Subject-wise Split 기준)
 PERSON_IDS = {
-    "KHM": "P001",
+    "KHM": "S00",
 }
 
 # E001~E015 = 신호 A01~A15 (촬영 순서표 번호와 같음)
@@ -113,7 +118,7 @@ def build_rows(items: list[dict]) -> list[dict]:
             "source_file": it["source_file"],
             "clip_id": "",
             "person_id": person_id,
-            "action_id": f"A{e:03d}",
+            "action_id": f"A{e:02d}",
             "take": "",
             "variant": it["variant"],
             "variant_desc": VARIANT_DESC.get(it["variant"], f"{it['variant']} (의미 확인 필요)"),
@@ -140,7 +145,7 @@ def build_rows(items: list[dict]) -> list[dict]:
         group = sorted(used[(person_id, e)], key=lambda r: (r["_v"], r["_t"], r["source_file"]))
         for take, r in enumerate(group, start=1):
             r["take"] = take
-            r["clip_id"] = f"{person_id}_A{e:03d}_T{take:02d}"
+            r["clip_id"] = f"{TEAM_ID}_{person_id}_A{e:02d}_T{take:02d}_{SOURCE_TAG}"
             rows.append({k: r[k] for k in COLUMNS})
 
     rows.extend(sorted(excluded, key=lambda r: r["source_file"]))
@@ -162,9 +167,9 @@ def check_problems(items: list[dict]) -> list[str]:
 def print_summary(rows: list[dict], skipped: list[str]) -> None:
     used = [r for r in rows if r["use"] == "Y"]
     print(f"\n[대응 결과] 사용 {len(used)}개 / 제외 {len(rows) - len(used)}개 / 이름 규칙 밖 {len(skipped)}개")
-    print(f"{'source_file':<34} {'clip_id':<16} {'variant':<8} {'label':<6} note")
+    print(f"{'source_file':<34} {'clip_id':<22} {'variant':<8} {'label':<6} note")
     for r in rows:
-        print(f"{r['source_file']:<34} {r['clip_id'] or '-':<16} {r['variant'] or '-':<8} {r['main_label'] or '-':<6} {r['note']}")
+        print(f"{r['source_file']:<34} {r['clip_id'] or '-':<22} {r['variant'] or '-':<8} {r['main_label'] or '-':<6} {r['note']}")
     if skipped:
         print("\n[이름 규칙 밖 → take_log에 넣지 않음]")
         for name in skipped:
