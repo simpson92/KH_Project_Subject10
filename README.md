@@ -281,6 +281,26 @@ Feature가 시간에 따라 변하는 모습을 확인했습니다.
 - 영상의 시작·끝(팔을 내린 구간)은 두 동작이 같아, Frame 한 장이 아니라 시간 순서가 필요함
 - 17번 1조 규칙 (`scripts/17_referee_rule.py`): U파울 = 양 손목이 코보다 위 + 양 손목 거리 < 1.0 어깨 폭 → 사진 4장 · 영상 4개 모두 예상대로 판정 (푸싱 오판 0)
 
+### 추가 작업 — 테스트 · D6 · 타임라인
+
+| 파일 | 내용 | 실행 |
+| --- | --- | --- |
+| `tests/` | `feature_utils`(각도·정규화·좌우 반전·Near/Far 불변성), 1조 U파울 규칙, D6 대표 인물, 튐 탐지 단위 테스트. 가짜 Pose 좌표로 검사해서 YOLO·GPU·`data/` 없이 실행됨 | `uv run pytest -v` |
+| `src/pose_utils.py` `select_main_person()` | 여러 사람이 보이면 대표 인물 선택 (`area` = 가장 큰 BBox, D6 결정값 · `conf` · `first`) | 18번 `--main-person area` (기본) |
+| `scripts/18_video_frame_features.py` | D6 반영. CSV 맨 뒤에 `people` · `person_index` 열 추가 (38-D 열 위치는 그대로). 교재 결과 재현은 `--main-person first` | |
+| `scripts/day03_plot_feature_timeline.py` | 18번 CSV 1~4개 → `wrist − nose` · 팔꿈치 각도 · 어깨 폭 그래프, 앞 Frame 대비 \|Δ각도\| ≥ 40°인 Frame을 `feature_spikes.csv`로 저장 | 아래 |
+| `scripts/day03_batch_video_qa.py` | 스모크 영상 전체에 18번(38-D) · 17번(U파울 규칙) · 튐 탐지를 한 번에 실행 → 영상별 `video_qa.csv` (유효 Frame 비율, 다른 사람 등장, 어깨 폭 변화, 규칙 판정, PASS/REVIEW) + 사람 × 동작별 규칙 정답률 | `python scripts/day03_batch_video_qa.py` |
+
+```bash
+python scripts/day03_plot_feature_timeline.py \
+  --csv reports/day03/tables/S01_ufoul_T01_frame_features.csv \
+        reports/day03/tables/S01_pushing_T01_frame_features.csv
+# → reports/day03/images/feature_timeline.png, reports/day03/tables/feature_spikes.csv (Git 제외)
+```
+
+- 4일차에 `feature_utils.py`에 팀 Feature를 추가한 뒤 `uv run pytest`가 실패하면 기존 38-D 계산이 바뀐 것
+- 튐 Frame은 Pose 오류일 수도, 빠른 동작일 수도 있음 → 영상으로 확인 후 4일차 REVIEW 후보로 사용
+
 ### 다음 수업
 
 4일차에는 여러 Frame의 Feature를 시간 순서로 묶어

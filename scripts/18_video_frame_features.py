@@ -36,7 +36,11 @@ from src.feature_utils import (  # noqa: E402
     normalize_by_shoulder_width,
     selected_joint_angles,
 )
-from src.pose_utils import COCO_KEYPOINT_NAMES  # noqa: E402
+from src.pose_utils import (  # noqa: E402
+    COCO_KEYPOINT_NAMES,
+    MAIN_PERSON_MODES,
+    select_main_person,
+)
 
 
 # ==================================================
@@ -45,6 +49,8 @@ from src.pose_utils import COCO_KEYPOINT_NAMES  # noqa: E402
 # --source     : 분석할 MP4 (기본 feature_demo.mp4)
 # --kp-conf    : LOW 관절을 셀 Confidence 기준 (기본 0.50)
 # --max-frames : 최대 처리 Frame 수 (0 = 전체)
+# --main-person: 여러 사람이 보일 때 대표 인물 (기본 area = 1조 D6 결정)
+#                first로 주면 교재 코드와 같이 첫 번째 사람을 사용
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -53,6 +59,11 @@ def parse_args():
     )
     parser.add_argument("--kp-conf", type=float, default=0.50)
     parser.add_argument("--max-frames", type=int, default=150)
+    parser.add_argument(
+        "--main-person",
+        choices=MAIN_PERSON_MODES,
+        default="area",
+    )
     return parser.parse_args()
 
 
@@ -81,7 +92,9 @@ def make_feature_names():
 # Pose가 없거나 정규화·각도 계산이 불가능하면
 # valid_pose = 0 으로 기록하고 Feature는 빈 값(NaN)으로 둡니다.
 # Confidence가 낮아도 Frame을 버리지 않고 품질 정보만 기록합니다.
-def frame_to_row(result, frame_id, time_sec, kp_conf, feature_names):
+def frame_to_row(
+    result, frame_id, time_sec, kp_conf, feature_names, main_person="area"
+):
     row = {
         "frame_id": frame_id,
         "time_sec": round(time_sec, 3),
@@ -94,18 +107,24 @@ def frame_to_row(result, frame_id, time_sec, kp_conf, feature_names):
     }
     for name in feature_names:
         row[name] = ""
+    # 대표 인물 정보는 38-D 열 위치가 바뀌지 않도록 맨 뒤에 붙입니다.
+    # people       : 이 Frame에서 검출된 사람 수
+    # person_index : 대표 인물로 고른 사람 번호 (D6: 가장 큰 BBox)
+    row["people"] = 0
+    row["person_index"] = ""
 
-    if (
-        result.keypoints is None
-        or result.keypoints.xy is None
-        or len(result.keypoints.xy) == 0
-    ):
+    index = select_main_person(result, main_person)
+    if index is None:
         return row
 
-    # 16번과 같이 첫 번째 사람을 사용합니다.
-    keypoints = result.keypoints.xy[0].cpu().numpy()
+    row["people"] = len(result.keypoints.xy)
+    row["person_index"] = index
+
+    # 1조 D6: 여러 사람이 보이면 가장 큰 BBox의 사람을 사용합니다.
+    # (--main-person first → 교재 16번과 같이 첫 번째 사람)
+    keypoints = result.keypoints.xy[index].cpu().numpy()
     if result.keypoints.conf is not None:
-        confidence = result.keypoints.conf[0].cpu().numpy()
+        confidence = result.keypoints.conf[index].cpu().numpy()
     else:
         confidence = np.ones(17, dtype=np.float32)
 
@@ -192,7 +211,14 @@ def main() -> None:
             verbose=False,
         )
         rows.append(
-            frame_to_row(results[0], frame_id, time_sec, args.kp_conf, feature_names)
+            frame_to_row(
+                results[0],
+                frame_id,
+                time_sec,
+                args.kp_conf,
+                feature_names,
+                args.main_person,
+            )
         )
 
     cap.release()
@@ -211,10 +237,12 @@ def main() -> None:
             writer.writerows(rows)
 
     valid_count = sum(row["valid_pose"] for row in rows)
+    multi_count = sum(1 for row in rows if row["people"] > 1)
     print(f"Source: {source.name}")
     print(f"Total frames: {len(rows)}")
     print(f"Valid pose frames: {valid_count}")
     print(f"Feature count per frame: {len(feature_names)}")
+    print(f"Multi-person frames: {multi_count} (main person = {args.main_person})")
     print(f"Saved: {output_path}")
 
 
