@@ -21,6 +21,13 @@ from __future__ import annotations
 #   python scripts/day03_batch_video_qa.py --limit 4       # 먼저 4개만
 #   python scripts/day03_batch_video_qa.py --skip-existing # YOLO 다시 안 돌리고 요약만
 #
+# 파일 이름은 두 가지 모두 인식합니다.
+#   - 팀 형식      S01_ufoul_T01.mp4               (referee_00 --apply 후)
+#   - 촬영 원본    s03 u파울-이름 (1).mp4         (이름 변경 전)
+#     → referee_00과 같은 규칙으로 S번호를 매김
+#       (이름 가나다순, subjects.csv가 있으면 그 표)
+#     → 결과 CSV에는 실명 대신 S01_ufoul_T01 같은 ID만 남음
+#
 # 결과 (Git 제외 경로)
 #   reports/day03/tables/<영상>_frame_features.csv   (18번과 같은 형식)
 #   reports/day03/tables/video_qa.csv                (영상별 요약)
@@ -123,6 +130,56 @@ def extract_frames(video: Path, model, config, device, args, s18) -> pd.DataFram
 
 
 # ==================================================
+# [03-1] 영상 파일 이름 → ID (S01_ufoul_T01)
+# ==================================================
+def identify_videos(videos: list[Path], rename) -> dict[Path, dict]:
+    """영상마다 {video_id, subject, action, take}를 만듭니다.
+
+    rename = referee_00_rename_videos 모듈 (PATTERN · ACTION_CODES · SUBJECT_CSV 재사용)
+    """
+    found = {}
+    originals = {}
+    for video in videos:
+        meta = parse_name(video.stem)
+        if meta:
+            found[video] = meta
+            continue
+        match = rename.PATTERN.match(video.name)
+        if match and match.group("code").lower() in rename.ACTION_CODES:
+            originals[video] = {
+                "name": match.group("name").strip(),
+                "action": rename.ACTION_CODES[match.group("code").lower()],
+                "take": int(match.group("take")),
+            }
+
+    # 사람 번호: subjects.csv가 있으면 그 표, 없으면 referee_00과 같은 가나다순
+    subject_ids = {}
+    if Path(rename.SUBJECT_CSV).exists():
+        table = pd.read_csv(rename.SUBJECT_CSV, encoding="utf-8-sig")
+        subject_ids = dict(zip(table["name"], table["subject_id"]))
+    for index, name in enumerate(sorted({o["name"] for o in originals.values()}), 1):
+        subject_ids.setdefault(name, f"S{index:02d}")
+
+    for video, o in originals.items():
+        found[video] = {
+            "subject": subject_ids[o["name"]],
+            "action": o["action"],
+            "take": o["take"],
+        }
+
+    result = {}
+    for video in videos:
+        meta = found.get(video)
+        if meta:
+            video_id = f"{meta['subject']}_{meta['action']}_T{int(meta['take']):02d}"
+        else:  # 규칙 밖 이름: ID 없이 원래 이름을 쓰고 동작은 모름
+            meta = {"subject": "", "action": "", "take": ""}
+            video_id = video.stem
+        result[video] = {"video_id": video_id, **meta}
+    return result
+
+
+# ==================================================
 # [04] Frame CSV → 영상 요약 1행
 # ==================================================
 def longest_true_run(flags: list[bool]) -> int:
@@ -134,8 +191,12 @@ def longest_true_run(flags: list[bool]) -> int:
     return best
 
 
-def summarize_video(stem: str, frames: pd.DataFrame, args, s17, timeline) -> dict:
-    meta = parse_name(stem) or {"subject": "", "action": "", "take": ""}
+def summarize_video(
+    stem: str, frames: pd.DataFrame, args, s17, timeline, meta: dict | None = None
+) -> dict:
+    if meta is None:
+        meta = parse_name(stem) or {"subject": "", "action": "", "take": ""}
+    meta = {k: meta[k] for k in ("subject", "action", "take")}
     total = len(frames)
     valid = frames[frames["valid_pose"] == 1].reset_index(drop=True)
     n_valid = len(valid)
@@ -189,8 +250,12 @@ def summarize_video(stem: str, frames: pd.DataFrame, args, s17, timeline) -> dic
     row["ufoul_true_frames"] = int(sum(flags))
     row["longest_true_run_sec"] = round(run / fps, 2)
     row["rule_pred"] = "ufoul" if run / fps >= args.min_run_sec else "other"
-    expected = "ufoul" if meta.get("action") == "ufoul" else "other"
-    row["rule_correct"] = row["rule_pred"] == expected
+    # 파일 이름에서 동작을 알 수 없으면 정답 비교를 하지 않음 (오판으로 세지 않음)
+    if meta.get("action"):
+        expected = "ufoul" if meta["action"] == "ufoul" else "other"
+        row["rule_correct"] = row["rule_pred"] == expected
+    else:
+        row["rule_correct"] = None
 
     # --- 팔꿈치 각도 튐 ---
     spikes = 0
@@ -204,8 +269,10 @@ def summarize_video(stem: str, frames: pd.DataFrame, args, s17, timeline) -> dic
         reasons.append("유효 Frame < 95%")
     if row["multi_person_frames"]:
         reasons.append("다른 사람 등장")
-    if not row["rule_correct"]:
+    if row["rule_correct"] is False:
         reasons.append("17번 규칙 오판")
+    if not meta.get("action"):
+        reasons.append("파일 이름에서 동작을 알 수 없음")
     if row["shoulder_min_ratio"] < 0.7:
         reasons.append("어깨 폭 30% 이상 줄어듦")
     row["status"] = "REVIEW" if reasons else "PASS"
@@ -232,6 +299,8 @@ def main() -> None:
     if not videos:
         raise SystemExit(f"영상이 없습니다: {source_dir}")
 
+    rename = load_script("referee_00_rename_videos.py")
+    ids = identify_videos(videos, rename)
     s18 = load_script("18_video_frame_features.py")
     s17 = load_script("17_referee_rule.py")
     timeline = load_script("day03_plot_feature_timeline.py")
@@ -241,7 +310,12 @@ def main() -> None:
     summaries = []
 
     for i, video in enumerate(videos, start=1):
-        frame_csv = TABLE_DIR / f"{video.stem}_frame_features.csv"
+        info = ids[video]
+        frame_csv = TABLE_DIR / f"{info['video_id']}_frame_features.csv"
+        # 이전 실행이 원본 이름으로 저장한 CSV도 재사용 (YOLO 재실행 방지)
+        old_csv = TABLE_DIR / f"{video.stem}_frame_features.csv"
+        if args.skip_existing and not frame_csv.exists() and old_csv.exists():
+            old_csv.rename(frame_csv)  # 실명 파일 이름 → ID 파일 이름
         if args.skip_existing and frame_csv.exists():
             frames = pd.read_csv(frame_csv)
             source = "기존 CSV"
@@ -258,22 +332,24 @@ def main() -> None:
             frames.to_csv(frame_csv, index=False, encoding="utf-8-sig")
             source = "YOLO"
 
-        row = summarize_video(video.stem, frames, args, s17, timeline)
+        row = summarize_video(info["video_id"], frames, args, s17, timeline, info)
         summaries.append(row)
         print(
-            f"[{i:3d}/{len(videos)}] {video.stem:22s} {source:6s} "
+            f"[{i:3d}/{len(videos)}] {info['video_id']:22s} {source:6s} "
             f"valid {row['valid_ratio']:.0%}  rule={row.get('rule_pred', '-'):5s} "
             f"{row['status']}  {row['reasons']}"
         )
 
-    qa = pd.DataFrame(summaries)
+    qa = pd.DataFrame(summaries).sort_values("video").reset_index(drop=True)
+    qa["take"] = pd.to_numeric(qa["take"], errors="coerce").astype("Int64")
     output = TABLE_DIR / args.output
     qa.to_csv(output, index=False, encoding="utf-8-sig")
 
     # 사람 × 동작별 요약: 특정 사람에게만 규칙이 틀리는지
     print()
-    if "rule_correct" in qa:
-        table = qa.pivot_table(
+    judged = qa[qa["rule_correct"].notna()].astype({"rule_correct": float})
+    if not judged.empty:
+        table = judged.pivot_table(
             index="subject",
             columns="action",
             values="rule_correct",

@@ -119,3 +119,46 @@ def test_multi_person_and_invalid_frames_go_to_review(modules):
     assert row["multi_person_frames"] == 60
     assert row["status"] == "REVIEW"
     assert "다른 사람" in row["reasons"] and "95%" in row["reasons"]
+
+
+# --------------------------------------------------
+# 파일 이름 → ID (원본 촬영 이름도 인식)
+# --------------------------------------------------
+def test_identify_original_and_team_names(modules, tmp_path):
+    batch, _, _ = modules
+    rename = _load("referee_00_rename_videos.py")
+    rename.SUBJECT_CSV = tmp_path / "no_subjects.csv"  # 대응표 없음 → 가나다순
+    videos = [
+        Path("raw/s05 푸싱-라마바 (10).mp4"),
+        Path("raw/s03 u파울-가나다 (1).mp4"),
+        Path("raw/S03_ufoul_T02.mp4"),
+        Path("raw/random_clip.mp4"),
+    ]
+    ids = batch.identify_videos(videos, rename)
+    assert ids[videos[0]]["video_id"] == "S02_pushing_T10"
+    assert ids[videos[1]]["video_id"] == "S01_ufoul_T01"
+    assert ids[videos[2]]["video_id"] == "S03_ufoul_T02"
+    assert ids[videos[3]] == {
+        "video_id": "random_clip",
+        "subject": "",
+        "action": "",
+        "take": "",
+    }
+
+
+def test_identify_uses_subjects_csv(modules, tmp_path):
+    batch, _, _ = modules
+    rename = _load("referee_00_rename_videos.py")
+    table = tmp_path / "subjects.csv"
+    table.write_text("subject_id,name\nS04,가나다\n", encoding="utf-8-sig")
+    rename.SUBJECT_CSV = table
+    video = Path("raw/s03 u파울-가나다 (3).mp4")
+    assert batch.identify_videos([video], rename)[video]["video_id"] == "S04_ufoul_T03"
+
+
+def test_unknown_action_is_not_counted_as_wrong(modules):
+    batch, s17, timeline = modules
+    row = batch.summarize_video("random_clip", fake_frames(), ARGS, s17, timeline)
+    assert row["rule_correct"] is None
+    assert "동작을 알 수 없음" in row["reasons"]
+    assert "오판" not in row["reasons"]
