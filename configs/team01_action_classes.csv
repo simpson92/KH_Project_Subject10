@@ -1,0 +1,18 @@
+action_id,label_ko,label_en,motion_type,confusable,smoke_action
+A01,블로킹 / 비합법적인 스크린,Blocking / Illegal screen,정지,,
+A02,홀딩,Holding,짧은 동작,A03,
+A03,U파울,Unsportsmanlike foul,정지,A02,ufoul
+A04,테크니컬 파울,Technical foul,정지,,
+A05,푸싱 / 볼 없는 상태의 차징,Pushing / Charging without the ball,반복,,pushing
+A06,트래블링,Travelling,회전,A07,
+A07,더블 드리블,Illegal dribble: Double dribbling,반복,A06,
+A08,과도한 팔꿈치 사용,Excessive swinging of elbow,반복,A09 A12,
+A09,샷클락 위반,24 seconds / Shot clock,반복,A08 A11,
+A10,고의적으로 볼을 차거나 막음,Deliberate kick or block of the ball,정지,A14,
+A11,머리 가격,Hit to the head,짧은 동작,A09,
+A12,후킹,Hooking,짧은 동작,A08,
+A13,백코트 바이올레이션,Ball returned to backcourt,반복,,
+A14,슈팅 동작이 아닌 파울,Foul not on the act of shooting,두 단계,A10 C01,
+A15,교체,Substitution,정지,,
+C01,시계 정지 (손 들기),Stop the clock,정지,,
+N00,신호 없음,No signal,,,
