@@ -308,6 +308,27 @@ python scripts/day03_plot_feature_timeline.py \
 
 ---
 
+## Day 04 준비 — clip_id 이름 규칙 · clip manifest
+
+4일차 교재 STEP 1(영상마다 고유 ID와 정답 Label)을 스모크 영상 100개에 먼저 적용합니다.
+
+| 파일 | 내용 |
+| --- | --- |
+| `configs/team01_action_classes.csv` | A01~A15 · C01 · N00 정의 (`02_라벨링_가이드` 4장). `smoke_action` 칸 = 스모크 폴더 이름 (ufoul → A03, pushing → A05) |
+| `scripts/day04_make_clip_manifest.py` | 원본 이름(`s03 u파울-이름 (1).mp4`) 또는 `S01_ufoul_T01.mp4` → `T01_S##_A##_T##` + `configs/team01_clip_manifest.csv` |
+
+```bash
+python scripts/day04_make_clip_manifest.py           # 미리보기 + manifest 작성
+python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01/rgb/videos/ 로 복사 (원본 유지)
+```
+
+- 사람 번호 = `data/referee/smoke/subjects.csv` (없으면 가나다순으로 한 번 만들고 이후 고정). 이 표와 원본 경로 대응표(`clip_id_map.csv`)는 실명이 있어 Git 제외
+- `team01_clip_manifest.csv`에는 실명이 없음 → Git에 올려 조원 모두 같은 clip_id 사용
+- `review_status` = 3일차 `video_qa.csv` 결과(PASS/REVIEW), 없으면 PENDING
+- ⚠️ VICON 배우 KHM은 임시 `S00` (`01` 문서 T-01). 같은 사람이 스모크에 있으면 VICON 번호를 스모크 번호로 맞춰야 Subject-wise Split에서 누수가 없음 (후속 작업 11)
+
+---
+
 ## 1조 프로젝트 — 농구 심판 수신호 인식 → 전광판
 
 수업 Pipeline을 농구 심판의 파울 수신호 15개 인식에 적용하는 조 프로젝트입니다.
