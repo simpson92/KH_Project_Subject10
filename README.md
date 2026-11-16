@@ -41,6 +41,35 @@ subject10_pose_action/
 └── docs/referee/               # 1조 프로젝트 설계 문서
 ```
 
+### `data/` 폴더 구조 (Git 제외 — 각자 PC에 직접 넣기)
+
+```text
+data/
+├── day01/
+│   ├── coco8-pose.zip · coco8_pose/        # 강사님 제공 (압축 해제)
+│   ├── video/solution_ci_pose_demo.mp4     # 강사님 제공
+│   └── ip_webcam/                          # 각자 촬영 (front · arms_up · far.jpg)
+├── day02/
+│   ├── images/                             # 강사님 제공 6장 (front, arms_up, side …)
+│   └── videos/pose_quality_demo.mp4        # day01 영상 복사
+├── day03/
+│   ├── images/                             # 강사님 제공 8장 (arms_up_person_a …)
+│   ├── videos/feature_demo.mp4             # day02 영상 복사
+│   └── team/                               # 스모크 영상 가운데 Frame 4장 (Mini Challenge)
+├── referee/smoke/
+│   ├── raw/ufoul/  S01~S05_ufoul_T01~T10.mp4     # 조원 휴대폰 촬영 50개
+│   ├── raw/pushing/ S01~S05_pushing_T01~T10.mp4  # 조원 휴대폰 촬영 50개
+│   └── subjects.csv                        # S번호 ↔ 이름 (실명 → 공유 금지)
+├── raw/vicon/                              # Motion_Visol.zip 압축 해제 (FBX 61개)
+│   └── glb/                                # Glb.zip 압축 해제 (GLB 60개)
+├── take_log.csv                            # vicon_00 실행 결과
+└── vicon_3d/                               # vicon_01 실행 결과 (3D JSON 50개)
+```
+
+- 강사님 제공 파일은 수업 자료에서, 스모크 영상 · VICON zip은 조 공유 폴더에서 받아요.
+- `take_log.csv`, `vicon_3d/`는 받는 게 아니라 스크립트를 실행하면 생겨요.
+- 영상 · 사진에는 조원 얼굴이 있어서 레포나 외부에 올리지 않아요.
+
 ---
 
 ## Day 01 - Pose 전체 구조·개발환경·실제 데이터 입력
