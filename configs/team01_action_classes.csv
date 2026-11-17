@@ -16,3 +16,6 @@ A14,슈팅 동작이 아닌 파울,Foul not on the act of shooting,두 단계,A1
 A15,교체,Substitution,정지,,
 C01,시계 정지 (손 들기),Stop the clock,정지,,
 N00,신호 없음,No signal,,,
+D01,휘슬 불기 (일상 동작 → N00),Daily: whistle,짧은 동작,A11 A09,
+D02,팔짱 끼기 (일상 동작 → N00),Daily: arms folded,정지,A15,
+D03,뒷머리 긁기 (일상 동작 → N00),Daily: scratch back of head,짧은 동작,A11 A09,

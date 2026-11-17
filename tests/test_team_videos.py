@@ -74,6 +74,17 @@ def test_ok_video(mod, tmp_path):
     assert status == "OK", issues
 
 
+def test_daily_action_clip_id_is_ok(mod, tmp_path):
+    """일상 동작 D## (03 문서 7.5) 도 clip_id로 인정, X## 같은 다른 글자는 형식 오류."""
+    video = tmp_path / "T01_S05_D02_T01.mp4"
+    _write_video(video, 12)
+    info = mod.probe_video(video)
+    status, issues = mod.judge(_row("T01_S05_D02_T01", 12), info, {"A03", "D02"})
+    assert status == "OK", issues
+    status, issues = mod.judge(_row("T01_S05_X02_T01", 12), info, {"A03", "D02"})
+    assert status == "FAIL" and "clip_id 형식 오류" in issues
+
+
 def test_missing_file_is_fail(mod, tmp_path):
     info = mod.probe_video(tmp_path / "T01_S01_A03_T02.mp4")
     status, issues = mod.judge(_row("T01_S01_A03_T02", 10), info, {"A03"})
