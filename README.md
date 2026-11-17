@@ -325,7 +325,7 @@ python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01
 - 사람 번호 = `data/referee/smoke/subjects.csv` (없으면 가나다순으로 한 번 만들고 이후 고정). 이 표와 원본 경로 대응표(`clip_id_map.csv`)는 실명이 있어 Git 제외
 - `team01_clip_manifest.csv`에는 실명이 없음 → Git에 올려 조원 모두 같은 clip_id 사용
 - `review_status` = 3일차 `video_qa.csv` 결과(PASS/REVIEW), 없으면 PENDING
-- ⚠️ VICON 배우 KHM은 임시 `S00` (`01` 문서 T-01). 같은 사람이 스모크에 있으면 VICON 번호를 스모크 번호로 맞춰야 Subject-wise Split에서 누수가 없음 (후속 작업 11)
+- ✅ VICON 배우 KHM = `S01` 확정 (스모크 S01과 같은 사람) (`01` 문서 T-01). 같은 사람이 스모크에 있으면 VICON 번호를 스모크 번호로 맞춰야 Subject-wise Split에서 누수가 없음 (후속 작업 11)
 
 ---
 
