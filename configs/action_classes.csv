@@ -1,0 +1,7 @@
+action_id,action_label,type,video_file,description
+A001,bend_return,dynamic,bend_return.mp4,허리를 앞으로 굽혔다가 다시 똑바로 선다
+A002,leg_raise_lower,dynamic,leg_raise_lower.mp4,한쪽 다리를 들어 올렸다가 다시 내린다
+A003,walk_turn_walk,dynamic,walk_turn_walk.mp4,걷다가 방향을 바꾸고 다시 걷는다
+A004,drink_return,dynamic,drink_return.mp4,음료를 마신 후 다시 정면을 바라본다
+A005,sit_stand,dynamic,sit_stand.mp4,의자에 앉았다가 다시 일어선다
+A006,wave,dynamic,wave.mp4,한 손을 들어 흔들어 인사한다

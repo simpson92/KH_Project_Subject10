@@ -45,3 +45,15 @@ reports/day02/tables/*.csv
 
 reports/referee/smoke/keypoints/
 reports/day03/tables/*.csv
+
+# Generated Day04 results
+reports/day04/keyframes/*.jpg
+reports/day04/sequences/*.csv
+reports/day04/tables/*.csv
+reports/day04/challenge/keyframes/*.jpg
+reports/day04/challenge/sequences/*.csv
+reports/day04/challenge/challenge_sequence_summary.csv
+
+# Generated team01 extension results
+reports/team_projects/team01/tables/*.csv
+reports/team_projects/team01/sequences/*.csv
