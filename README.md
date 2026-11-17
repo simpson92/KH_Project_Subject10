@@ -60,9 +60,6 @@ data/
 │   ├── raw/ufoul/  S01~S05_ufoul_T01~T10.mp4     # 조원 휴대폰 촬영 50개
 │   ├── raw/pushing/ S01~S05_pushing_T01~T10.mp4  # 조원 휴대폰 촬영 50개
 │   └── subjects.csv                        # S번호 ↔ 이름 (실명 → 공유 금지)
-├── team_projects/team01/
-│   ├── rgb/videos/                         # 스모크 100개 (그대로 둠)
-│   └── main/rgb/videos/                    # 본 촬영 (새로)
 ├── raw/vicon/                              # Motion_Visol.zip 압축 해제 (FBX 61개)
 │   └── glb/                                # Glb.zip 압축 해제 (GLB 60개)
 ├── take_log.csv                            # vicon_00 실행 결과
