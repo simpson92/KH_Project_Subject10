@@ -20,7 +20,7 @@ ACTION_CODES = {
     "s05": "pushing",
 }
 
-# 원본 파일명 형식: "s03 u파울-김하민 (1).mp4"
+# 원본 파일명 형식: "s03 u파울-홍길동 (1).mp4"
 PATTERN = re.compile(
     r"^(?P<code>s\d+)\s+(?P<action>.+?)-(?P<name>.+?)\s*\((?P<take>\d+)\)\.mp4$",
     re.IGNORECASE,
@@ -70,7 +70,7 @@ def main() -> None:
             {
                 "src": path,
                 "action": ACTION_CODES[code],
-                # 이름 앞뒤 공백 제거 → "최용훈 "과 "최용훈"을 같은 사람으로
+                # 이름 앞뒤 공백 제거 → "홍길동 "과 "홍길동"을 같은 사람으로
                 "name": match.group("name").strip(),
                 "take": int(match.group("take")),
             }
