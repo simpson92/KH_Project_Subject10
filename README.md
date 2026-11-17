@@ -351,5 +351,5 @@ python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01
 | `scripts/vicon_00_make_take_log.py` · `vicon_01_extract_3d_json.py` | VICON 촬영 파일 정리, GLB → 3D JSON 추출 |
 | `scripts/referee_00~04_*.py` · `reports/referee/smoke/` | 간이 검증용 스모크 테스트 (본 Pipeline 아님) |
 | `scripts/day04_hand_detect_check.py` · `reports/team_projects/team01/hand_detect_report.md` | 손 검출 가능성 실험 (YOLO 손목 crop → MediaPipe Hand Landmarker, D1 재검토 근거) |
-| `configs/team01_main_manifest.csv` · `reports/team_projects/team01/main_shoot_1117_report.md` | 본 촬영 manifest (세로 1080×1920, `capture_set = main_1117`) · 1차 촬영 결과 (S01·S05 72개, PASS 71 · REVIEW 1) |
+| `configs/team01_main_manifest.csv` · `reports/team_projects/team01/main_shoot_1117_report.md` | 본 촬영 manifest (세로 1080×1920, `capture_set = main_1117`) · 1차 촬영 결과 (S01·S05 73개, PASS 72 · REVIEW 1) |
 | `configs/team01_action_classes.csv` | 신호 A01~A15 · C01 · N00 + 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 (학습 때 N00) |
