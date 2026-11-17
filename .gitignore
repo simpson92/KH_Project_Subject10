@@ -53,3 +53,6 @@ reports/day04/tables/*.csv
 reports/day04/challenge/keyframes/*.jpg
 reports/day04/challenge/sequences/*.csv
 reports/day04/challenge/challenge_sequence_summary.csv
+
+# Generated team01 extension results
+reports/team_projects/team01/tables/*.csv
