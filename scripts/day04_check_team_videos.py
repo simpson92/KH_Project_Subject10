@@ -48,8 +48,9 @@ OUTPUT_CSV = (
     ROOT / "reports" / "team_projects" / "team01" / "tables" / "video_inventory.csv"
 )
 
+# 동작 자리: 신호 A## + 일상 동작 D## (03 촬영 계획서 7.5 · 8장, 01 문서 7.1)
 CLIP_ID_PATTERN = re.compile(
-    r"^(?P<team>T\d{2})_(?P<subject>S\d{2})_(?P<action>A\d{2})_(?P<take>T\d{2})$"
+    r"^(?P<team>T\d{2})_(?P<subject>S\d{2})_(?P<action>[AD]\d{2})_(?P<take>T\d{2})$"
 )
 
 FPS_TOLERANCE = 0.05  # manifest fps와 비교할 때 허용 오차
