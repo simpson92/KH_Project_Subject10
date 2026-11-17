@@ -219,9 +219,9 @@ def load_qa_status(path: Path) -> dict[str, tuple[str, str]]:
 # ==================================================
 # [06] 같은 사람 = 같은 S번호 점검 (Subject-wise Split 누수 방지)
 # ==================================================
-# 01_관절_매핑_명세 T-01: VICON 배우 KHM은 임시 S00.
+# 01_관절_매핑_명세 T-01: VICON 배우 KHM = S01 (스모크 S01과 같은 사람, 2026-11-16 확정).
 # 같은 사람이 스모크·웹캠에도 찍혔으면 VICON 쪽 번호를 맞춰야 함 (후속 작업 11).
-VICON_ACTORS = {"KHM": "S00"}
+VICON_ACTORS = {"KHM": "S01"}
 
 
 def check_vicon_subjects(subjects_csv: Path) -> list[str]:
