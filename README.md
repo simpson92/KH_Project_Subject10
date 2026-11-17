@@ -66,12 +66,18 @@ data/
 ├── raw/vicon/                              # Motion_Visol.zip 압축 해제 (FBX 61개)
 │   └── glb/                                # Glb.zip 압축 해제 (GLB 60개)
 ├── take_log.csv                            # vicon_00 실행 결과
-└── vicon_3d/                               # vicon_01 실행 결과 (3D JSON 50개)
+├── vicon_3d/                               # vicon_01 실행 결과 (3D JSON 50개)
+├── raw/webcam/                             # 본 촬영 원본 (폰에서 옮긴 그대로)
+└── team_projects/team01/
+    ├── rgb/videos/                         # 스모크 100개 (clip_id 이름, day04_make_clip_manifest --apply)
+    └── main/rgb/videos/                    # 본 촬영 (clip_id 이름) — 스모크와 이름이 겹쳐 폴더 분리
+models/hand_landmarker.task                 # MediaPipe 손 모델 (Git 제외, hand_detect_report.md 7장)
 ```
 
 - 강사님 제공 파일은 수업 자료에서, 스모크 영상 · VICON zip은 조 공유 폴더에서 받아요.
 - `take_log.csv`, `vicon_3d/`는 받는 게 아니라 스크립트를 실행하면 생겨요.
 - 영상 · 사진에는 조원 얼굴이 있어서 레포나 외부에 올리지 않아요.
+- 본 촬영 영상은 카카오톡 말고 USB · 구글 드라이브로 **원본** 그대로 옮겨요 (카톡은 다시 압축하고 촬영 시각을 지움).
 
 ---
 
@@ -347,3 +353,6 @@ python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01
 | `docs/referee/doc_versions.csv` | 설계 문서 버전 기록 (버전 · 날짜 · 작성자 · 커밋 · 내용) |
 | `scripts/vicon_00_make_take_log.py` · `vicon_01_extract_3d_json.py` | VICON 촬영 파일 정리, GLB → 3D JSON 추출 |
 | `scripts/referee_00~04_*.py` · `reports/referee/smoke/` | 간이 검증용 스모크 테스트 (본 Pipeline 아님) |
+| `scripts/day04_hand_detect_check.py` · `reports/team_projects/team01/hand_detect_report.md` | 손 검출 가능성 실험 (YOLO 손목 crop → MediaPipe Hand Landmarker, D1 재검토 근거) |
+| `configs/team01_main_manifest.csv` · `reports/team_projects/team01/main_shoot_1117_report.md` | 본 촬영 manifest (세로 1080×1920, `capture_set = main_1117`) · 1차 촬영 결과 (S01·S05 72개, PASS 71 · REVIEW 1) |
+| `configs/team01_action_classes.csv` | 신호 A01~A15 · C01 · N00 + 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 (학습 때 N00) |
