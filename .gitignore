@@ -29,6 +29,7 @@ data/
 *.pth
 *.onnx
 *.engine
+*.task
 
 # Training outputs
 runs/
