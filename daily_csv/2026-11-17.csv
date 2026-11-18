@@ -1,0 +1,18 @@
+﻿date,course_day,time,owner,category,task,result,outputs,commit,pr,status
+2026-11-17,Day 04,10:30,S03,수업,4일차 Action Clip · Sequence 실습 19~24 + action_classes.csv,,scripts/19~24 · configs/action_classes.csv,9fbbff5 · ace188f,,완료
+2026-11-17,Day 04,10:57,S03,코드,4일차 팀 확장 STEP 2~5 (영상 검사 · 대표 Frame · clip별 Sequence · 영상별 QA),1조 스모크 100개에 적용 + 테스트,scripts/day04_check_team_videos.py · day04_extract_team_keyframes.py · day04_build_team_sequences.py · day04_team_sequence_qa.py,6f7cc2a · 4ea0133 · 3a45056 · 94ff159,,완료
+2026-11-17,Day 04,11:44,S03,문서,3일차 Feature 측정을 DOC-04 G-01~G-03에 연결,F1 미정 · FR-01 차이 기록,reports/day03/challenge/feature_design.md,e468f6d,,완료
+2026-11-17,Day 04,12:47,S05,결정,VICON 배우 사람 번호 S00 → S01 (스모크 S01과 같은 사람),Subject-wise Split 누수 방지,docs/referee/01~04 v2.1 · scripts/vicon_00,a87b17b,#4,완료
+2026-11-17,Day 04,13:40,S05,실험,스모크 100개 손 검출 실험 (YOLO 손목 crop → MediaPipe Hand),U파울 73% · 푸싱 93% — 해상도보다 가림이 원인,scripts/day04_hand_detect_check.py · reports/team_projects/team01/hand_detect_report.md,6a5158f · ca54a2b,#5,완료
+2026-11-17,Day 04,촬영 전,전원,회의,본 촬영 전 결정 회의 (A1~A9),5명 × 18동작 × 5 Take = 450 · 테스트 S02 · S01 학습 · 정면 · 세로 1080×1920 · 소매 걷기 · 일상 동작 D01~D03,docs/referee/01~04 v2.2,b561a14,#6,완료
+2026-11-17,Day 04,16:10,S05,코드,일상 동작 D01~D03 클래스 추가 · STEP 2가 D## 허용,학습 때 N00,configs/team01_action_classes.csv,f8df826,#6,완료
+2026-11-17,Day 04,오후,S01 · S05,촬영,본 촬영 1차 — S01 · S05 18동작 × T01 · T02,73개 (PASS 72 · REVIEW 1),configs/team01_main_manifest.csv · main_shoot_1117_report.md,ec32d48 · 2358f25,#6 · #9,완료
+2026-11-17,Day 04,오후,S05,이슈,카카오톡 전송 문제 — 재압축 · 촬영 시각 삭제 · 순서 섞임 · 1개 누락,빠진 S05 A02 T02 찾아서 추가 → 이후 원본 전송만,,2358f25,#9,완료
+2026-11-17,Day 04,16:27,S04,문서,README data 폴더 구조에 team01 영상 경로 추가,,README.md,514c063,#7,완료
+2026-11-17,Day 04,16:37,S02,문서,스모크 README 수정,,reports/referee/smoke/README.md,7230296,#8,완료
+2026-11-17,Day 04,16:49,S05,문서,검토 반영 — README 중복 제거 · 03 로그 action_id 범위 · 예시 주석 실명 제거,,README.md · docs/referee/03,b7871a8,#9,완료
+2026-11-17,Day 04,오후,전원,결정,Take 10개 안 취소 → 5개 유지 (총 450) · 액터별 촬영 체크표 사용 (실명 있어 Git 제외),,,,,완료
+2026-11-17,Day 04,저녁,S01 · S05,촬영,본 촬영 2차 — S01 · S05 T03~T05,"108개 → S01 · S05 완료, 누적 181 (PASS 179 · REVIEW 2)",main_shoot_1117_2_report.md,6244737,#10,완료
+2026-11-17,Day 04,저녁,S05,데이터 QA,2차 카톡 파일 S01 A12_T03 ↔ A13_T05 뒤바뀜 발견 · 확대 비교 후 바로잡음,S01 A10_T04 FPS 29.31(깨짐 보고) → REVIEW,,6244737,#10,완료
+2026-11-17,Day 04,18:20,S05,코드,STEP 4 Sequence CSV → YOLO 관절별 conf 표 (관절 · clip · 사람×동작 + Markdown),,scripts/day04_pose_conf_report.py · tests/test_pose_conf_report.py,b4eef79,#10,완료
+2026-11-17,Day 04,저녁,S05,실험,본 촬영 손 검출,A15 교체 86% ↔ D02 팔짱 45% — 손 찾음/못 찾음이 두 동작 구분 근거,main_shoot_1117_2_report.md,6244737,#10,완료
