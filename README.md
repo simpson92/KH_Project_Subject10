@@ -354,5 +354,6 @@ python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01
 | `configs/team01_main_manifest.csv` · `reports/team_projects/team01/main_shoot_1117_report.md` | 본 촬영 manifest (세로 1080×1920, `capture_set = main_1117`) · 1차 촬영 결과 (S01·S05 73개, PASS 72 · REVIEW 1) |
 | `reports/team_projects/team01/main_shoot_1117_2_report.md` | 본 촬영 2차 결과 (S01·S05 T03~T05 108개 → S01·S05 완료, 누적 181개, PASS 179 · REVIEW 2) |
 | `reports/team_projects/team01/main_shoot_1118_s04_report.md` | 본 촬영 3차 결과 (S04 90개, 원본 전송 · 4K → 1080×1920 30 FPS 변환, 누적 271개) |
+| `reports/team_projects/team01/main_shoot_1118_s02_s03_report.md` | 본 촬영 4차 결과 (S02 90 · S03 80개, 누적 441개, S03 A12 · A13 보충 필요) |
 | `scripts/day04_pose_conf_report.py` | STEP 4 Sequence CSV → YOLO 관절별 conf 표 (관절 · clip · 사람×동작 CSV + Markdown 요약), STEP 2~5 다음에 실행 |
 | `configs/team01_action_classes.csv` | 신호 A01~A15 · C01 · N00 + 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 (학습 때 N00) |
