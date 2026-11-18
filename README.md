@@ -397,5 +397,6 @@ STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Hu
 | `reports/team_projects/team01/main_shoot_1118_s02_s03_report.md` | 본 촬영 4차 결과 (S02 90 · S03 80개 + 6장 S03 A12 · A13 보충 10개 → 누적 451개, 본 촬영 끝) |
 | `reports/team_projects/team01/team01_data_preparation_report.md` | 4일차 ⑧ 결과 보고서 + 5일차 Summary (QA · Human QA · Split · 4 · 5일차 점검표) |
 | `daily_csv/` | 날짜별 작업 기록 CSV (11-13~) + `index.csv` 요약. 쓰는 법은 `daily_csv/README.md` |
+| `docs/referee/team01_decision_log.md` | 1조 결정 기록 한 장 (회의 · 촬영 · QA · Split · 라벨 결정 A1~C10) |
 | `scripts/day04_pose_conf_report.py` | STEP 4 Sequence CSV → YOLO 관절별 conf 표 (관절 · clip · 사람×동작 CSV + Markdown 요약), STEP 2~5 다음에 실행 |
 | `configs/team01_action_classes.csv` | 신호 A01~A15 · C01 · N00 + 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 (학습 때 N00) |
