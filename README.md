@@ -356,8 +356,13 @@ STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Hu
 | 30 | `day05_team_subject_split.py` | `splits/train.csv · val.csv · test.csv · split_counts.csv` |
 | 31 | `day05_team_check_leakage.py` | Subject · clip · 영상 파일 겹침 + 18동작 coverage |
 | 32 | `day05_team_frame_split_demo.py` | Frame 무작위 분할의 누수 확인 (학습 없음) |
+| — | `day05_team_make_labels.py` · `day05_team_validate_labels.py` | `main/labels/team01_labels.csv` 구간 라벨 자동 초안 (N00 → X → C01 → X → 신호 → X → N00) · V-01~V-10 검사 |
+| — | `day05_team_label_sheet.py` | 라벨 확인용 모아보기 (각자 PC, 얼굴이 보여 Git 제외) |
+| — | `day05_team_export_keypoints.py` | Sequence → 5일차 수업 Keypoint CSV 형식 (`data/team_projects/team01/main/keypoints/`, Git 제외) |
+| — | `day05_team_signal_feature_check.py` | 팀 Feature G-01~G-10 라벨별 평균표 `main/features/signal_feature_by_label.csv` |
+| — | `day05_team_make_webcam_log.py` | 촬영 로그 `main/webcam_log.csv` (03 문서 9.1, 카메라 높이 · 거리 · 진행자는 사람이 기입) |
 
-- 공통 함수 `src/team_dataset_utils.py` · 테스트 `tests/test_team_dataset.py`
+- 공통 함수 `src/team_dataset_utils.py` · `src/team_label_utils.py` · `src/team_feature_utils.py` (G-01~G-10, 48-D) · 테스트 `tests/test_team_*.py`
 - 분할 설정 `configs/team01_subject_split.json` — Train S01 · S03 · S04 / Validation S05 / Test S02
 - 결과 요약 · 4 · 5일차 점검표: `reports/team_projects/team01/team01_data_preparation_report.md`
 
@@ -392,5 +397,6 @@ STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Hu
 | `reports/team_projects/team01/main_shoot_1118_s02_s03_report.md` | 본 촬영 4차 결과 (S02 90 · S03 80개 + 6장 S03 A12 · A13 보충 10개 → 누적 451개, 본 촬영 끝) |
 | `reports/team_projects/team01/team01_data_preparation_report.md` | 4일차 ⑧ 결과 보고서 + 5일차 Summary (QA · Human QA · Split · 4 · 5일차 점검표) |
 | `daily_csv/` | 날짜별 작업 기록 CSV (11-13~) + `index.csv` 요약. 쓰는 법은 `daily_csv/README.md` |
+| `docs/referee/team01_decision_log.md` | 1조 결정 기록 한 장 (회의 · 촬영 · QA · Split · 라벨 결정 A1~C10) |
 | `scripts/day04_pose_conf_report.py` | STEP 4 Sequence CSV → YOLO 관절별 conf 표 (관절 · clip · 사람×동작 CSV + Markdown 요약), STEP 2~5 다음에 실행 |
 | `configs/team01_action_classes.csv` | 신호 A01~A15 · C01 · N00 + 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 (학습 때 N00) |
