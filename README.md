@@ -335,6 +335,39 @@ python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01
 
 ---
 
+## Day 05 - Keypoint QA · Human QA · Subject-wise Split
+
+수업 실습 `scripts/25~32` (6동작 · 18 clip)를 그대로 두고, 같은 흐름을 1조 본 촬영 451개에 맞게 새로 만들었습니다.
+
+### Day 05 Pipeline (1조)
+
+```
+STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Human QA (PASS / RESHOOT / EXCLUDE)
+   ─▶ ③ Approved Manifest ─▶ ④ Subject-wise Split ─▶ ⑤ Leakage 검사   (+ Random Frame Split 비교)
+```
+
+| 실습 | 1조 스크립트 | 출력 (`reports/team_projects/team01/main/dataset/`) |
+| --- | --- | --- |
+| 27 | `day05_team_keypoint_qa.py` | `team01_clip_qa.csv` · `team01_clip_review.csv` (다시 돌려도 사람이 적은 결정 유지) |
+| 28 | `day05_team_validate_review.py` | 검사만 (UNREVIEWED · 잘못된 값 · note 없는 CHECK PASS · NO_SEQUENCE) |
+| 29 | `day05_team_approved_manifest.py` | `team01_approved_manifest.csv` (`train_label`: D01~D03 → N00) |
+| 30 | `day05_team_subject_split.py` | `splits/train.csv · val.csv · test.csv · split_counts.csv` |
+| 31 | `day05_team_check_leakage.py` | Subject · clip · 영상 파일 겹침 + 18동작 coverage |
+| 32 | `day05_team_frame_split_demo.py` | Frame 무작위 분할의 누수 확인 (학습 없음) |
+
+- 공통 함수 `src/team_dataset_utils.py` · 테스트 `tests/test_team_dataset.py`
+- 분할 설정 `configs/team01_subject_split.json` — Train S01 · S03 · S04 / Validation S05 / Test S02
+- 결과 요약 · 4 · 5일차 점검표: `reports/team_projects/team01/team01_data_preparation_report.md`
+
+### 주요 결과 (2026-11-18, Sequence 378 / 451 기준)
+
+- 자동 QA: AUTO_PASS 377 · CHECK 1 · NO_SEQUENCE 73 (1차 촬영분, STEP 4 다시 실행 필요)
+- Human QA: PASS 449 · RESHOOT 1 · EXCLUDE 1
+- Split: Train 233 · Val 54 · Test 90 → STEP 4 완료 후 269 · 90 · 90
+- Leakage check: OK · Frame 무작위 분할은 5명 · 377 clip 전부 겹침
+
+---
+
 ## 1조 프로젝트 — 농구 심판 수신호 인식 → 전광판
 
 수업 Pipeline을 농구 심판의 파울 수신호 15개 인식에 적용하는 조 프로젝트입니다.
@@ -354,6 +387,7 @@ python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01
 | `configs/team01_main_manifest.csv` · `reports/team_projects/team01/main_shoot_1117_report.md` | 본 촬영 manifest (세로 1080×1920, `capture_set = main_1117`) · 1차 촬영 결과 (S01·S05 73개, PASS 72 · REVIEW 1) |
 | `reports/team_projects/team01/main_shoot_1117_2_report.md` | 본 촬영 2차 결과 (S01·S05 T03~T05 108개 → S01·S05 완료, 누적 181개, PASS 179 · REVIEW 2) |
 | `reports/team_projects/team01/main_shoot_1118_s04_report.md` | 본 촬영 3차 결과 (S04 90개, 원본 전송 · 4K → 1080×1920 30 FPS 변환, 누적 271개) |
-| `reports/team_projects/team01/main_shoot_1118_s02_s03_report.md` | 본 촬영 4차 결과 (S02 90 · S03 80개, 누적 441개, S03 A12 · A13 보충 필요) |
+| `reports/team_projects/team01/main_shoot_1118_s02_s03_report.md` | 본 촬영 4차 결과 (S02 90 · S03 80개 + 6장 S03 A12 · A13 보충 10개 → 누적 451개, 본 촬영 끝) |
+| `reports/team_projects/team01/team01_data_preparation_report.md` | 4일차 ⑧ 결과 보고서 + 5일차 Summary (QA · Human QA · Split · 4 · 5일차 점검표) |
 | `scripts/day04_pose_conf_report.py` | STEP 4 Sequence CSV → YOLO 관절별 conf 표 (관절 · clip · 사람×동작 CSV + Markdown 요약), STEP 2~5 다음에 실행 |
 | `configs/team01_action_classes.csv` | 신호 A01~A15 · C01 · N00 + 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 (학습 때 N00) |
