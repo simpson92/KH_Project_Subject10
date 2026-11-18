@@ -358,6 +358,7 @@ STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Hu
 | 32 | `day05_team_frame_split_demo.py` | Frame 무작위 분할의 누수 확인 (학습 없음) |
 | — | `day05_team_make_labels.py` · `day05_team_validate_labels.py` | `main/labels/team01_labels.csv` 구간 라벨 자동 초안 (N00 → X → C01 → X → 신호 → X → N00) · V-01~V-10 검사 |
 | — | `day05_team_label_sheet.py` | 라벨 확인용 모아보기 (각자 PC, 얼굴이 보여 Git 제외) |
+| — | `day05_team_make_crosscheck.py` · `day05_team_label_crosscheck.py` | 라벨 교차 검수 10% — 표본 45개 · 1인 9개(자기 영상 제외) 배정 → 검수자 경계 ↔ 자동 라벨 비교(기준 0.2초) → `--apply`로 반영. 모아보기는 `--blind`(라벨 숨김) |
 | — | `day05_team_export_keypoints.py` | Sequence → 5일차 수업 Keypoint CSV 형식 (`data/team_projects/team01/main/keypoints/`, Git 제외) |
 | — | `day05_team_signal_feature_check.py` | 팀 Feature G-01~G-10 라벨별 평균표 `main/features/signal_feature_by_label.csv` |
 | — | `day05_team_make_webcam_log.py` | 촬영 로그 `main/webcam_log.csv` (03 문서 9.1, 카메라 높이 · 거리 · 진행자는 사람이 기입) |
