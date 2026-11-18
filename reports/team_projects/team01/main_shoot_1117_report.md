@@ -4,6 +4,7 @@
 - 관련: `03` 웹캠 촬영 계획서 v2.2 (W1·W2·W4·W7~W9), `02` 라벨링 가이드 v2.2 (R-11·R-12), `04` 8.2
 - manifest: `configs/team01_main_manifest.csv` (73행, `capture_set = main_1117`)
 - 영상 위치 (Git 제외): `data/team_projects/team01/main/rgb/videos/`
+- **이어서: 2차 108개 결과는 `main_shoot_1117_2_report.md`** (S01 · S05 촬영 완료, 181개)
 
 ## 1. 무엇을 찍었나
 
@@ -84,4 +85,5 @@ uv run python scripts/day04_check_team_videos.py --manifest $M --video-dir $V --
 uv run python scripts/day04_build_team_sequences.py --manifest $M --video-dir $V --output-dir $O/sequences
 uv run --with mediapipe python scripts/day04_hand_detect_check.py --manifest $M --video-dir $V \
   --sequence-dir $O/sequences --output-dir $O/tables --scales 1.0 --modes crop
+uv run python scripts/day04_pose_conf_report.py   # 관절별 conf 표 (2차 때 추가)
 ```
