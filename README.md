@@ -35,10 +35,12 @@ subject10_pose_action/
 ├── src/
 │   ├── common.py               # 설정 읽기 · GPU/CPU 선택      (1일차)
 │   ├── pose_utils.py           # COCO 17 이름 · Skeleton · 품질 판정 (2일차)
-│   └── feature_utils.py        # 관절각도 · 정규화 · 좌우 반전   (3일차)
-├── scripts/                    # 00~18 수업 순서대로 실행
+│   ├── feature_utils.py        # 관절각도 · 정규화 · 좌우 반전   (3일차)
+│   └── team_dataset_utils.py   # 1조 QA · Human QA · Split · Leakage (5일차)
+├── scripts/                    # 00~32 수업 순서대로 실행 + day0N_* 1조 확장
 ├── reports/                    # 일차별 결과 (CSV·이미지는 Git 제외)
-└── docs/referee/               # 1조 프로젝트 설계 문서
+├── docs/referee/               # 1조 프로젝트 설계 문서
+└── daily_csv/                  # 날짜별 작업 기록 (한 줄 = 작업 하나, S 번호만)
 ```
 
 ### `data/` 폴더 구조 (Git 제외 — 각자 PC에 직접 넣기)
@@ -362,9 +364,9 @@ STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Hu
 ### 주요 결과 (2026-11-18, Sequence 378 / 451 기준)
 
 - 자동 QA: AUTO_PASS 377 · CHECK 1 · NO_SEQUENCE 73 (1차 촬영분, STEP 4 다시 실행 필요)
-- Human QA: PASS 449 · RESHOOT 1 · EXCLUDE 1
-- Split: Train 233 · Val 54 · Test 90 → STEP 4 완료 후 269 · 90 · 90
-- Leakage check: OK · Frame 무작위 분할은 5명 · 377 clip 전부 겹침
+- Human QA: PASS 450 · EXCLUDE 1 (`T01_S05_A03_T01`, T06으로 대체)
+- Split (Validation S05 확정): Train 234 · Val 54 · Test 90 → STEP 4 완료 후 270 · 90 · 90
+- Leakage check: OK · Frame 무작위 분할은 5명 · 378 clip 전부 겹침
 
 ---
 
@@ -389,5 +391,6 @@ STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Hu
 | `reports/team_projects/team01/main_shoot_1118_s04_report.md` | 본 촬영 3차 결과 (S04 90개, 원본 전송 · 4K → 1080×1920 30 FPS 변환, 누적 271개) |
 | `reports/team_projects/team01/main_shoot_1118_s02_s03_report.md` | 본 촬영 4차 결과 (S02 90 · S03 80개 + 6장 S03 A12 · A13 보충 10개 → 누적 451개, 본 촬영 끝) |
 | `reports/team_projects/team01/team01_data_preparation_report.md` | 4일차 ⑧ 결과 보고서 + 5일차 Summary (QA · Human QA · Split · 4 · 5일차 점검표) |
+| `daily_csv/` | 날짜별 작업 기록 CSV (11-13~) + `index.csv` 요약. 쓰는 법은 `daily_csv/README.md` |
 | `scripts/day04_pose_conf_report.py` | STEP 4 Sequence CSV → YOLO 관절별 conf 표 (관절 · clip · 사람×동작 CSV + Markdown 요약), STEP 2~5 다음에 실행 |
 | `configs/team01_action_classes.csv` | 신호 A01~A15 · C01 · N00 + 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 (학습 때 N00) |
