@@ -63,6 +63,7 @@ reports/team_projects/team01/sequences/*.csv
 reports/team_projects/team01/main/tables/*.csv
 reports/team_projects/team01/main/sequences/*.csv
 reports/team_projects/team01/main/keyframes/
+reports/team_projects/team01/main/label_sheets/
 
 # Generated Day05 results
 reports/day05/tables/*.csv
