@@ -29,3 +29,14 @@ def test_build_log_fills_known_columns_and_leaves_measurements_blank():
     assert log.loc[1, "clip_type"] == "daily" and log.loc[1, "take"] == 3
     assert log.loc[1, "result"] == "RESHOOT" and log.loc[1, "issue"] == "손끝 잘림"
     assert (log[wlog.MANUAL] == "").all().all()
+
+
+def test_fill_manual_only_blank_cells_with_operator_map():
+    log = pd.DataFrame({"person_id": ["S01", "S02"], "cam_height_m": ["", "1.5"], "cam_distance_m": ["", ""],
+                        "operator": ["", ""], "note": ["", "기존"]})
+    args = type("A", (), {"cam_height": "1.3", "cam_distance": "2.0", "operator": "",
+                          "operator_map": "S01=S05,S02=S04", "value_note": "실측", "force": False})()
+    out = wlog.fill_manual(log, args)
+    assert out["cam_height_m"].tolist() == ["1.3", "1.5"]          # 이미 적힌 1.5는 그대로
+    assert out["operator"].tolist() == ["S05", "S04"]
+    assert out["note"].tolist() == ["높이·거리: 실측", "기존 · 높이·거리: 실측"]
