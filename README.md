@@ -364,14 +364,16 @@ STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Hu
 
 - 공통 함수 `src/team_dataset_utils.py` · `src/team_label_utils.py` · `src/team_feature_utils.py` (G-01~G-10, 48-D) · 테스트 `tests/test_team_*.py`
 - 분할 설정 `configs/team01_subject_split.json` — Train S01 · S03 · S04 / Validation S05 / Test S02
+- **Sequence CSV는 확정본** — `day04_build_team_sequences.py --overwrite`로 다시 만들지 않음 (다시 만들면 451개 전체가 바뀐 것으로 잡힘). 새 촬영분만 추가
 - 결과 요약 · 4 · 5일차 점검표: `reports/team_projects/team01/team01_data_preparation_report.md`
 
-### 주요 결과 (2026-11-18, Sequence 378 / 451 기준)
+### 주요 결과 (2026-11-18, 451개 확정)
 
-- 자동 QA: AUTO_PASS 377 · CHECK 1 · NO_SEQUENCE 73 (1차 촬영분, STEP 4 다시 실행 필요)
-- Human QA: PASS 450 · EXCLUDE 1 (`T01_S05_A03_T01`, T06으로 대체)
-- Split (Validation S05 확정): Train 234 · Val 54 · Test 90 → STEP 4 완료 후 270 · 90 · 90
-- Leakage check: OK · Frame 무작위 분할은 5명 · 378 clip 전부 겹침
+- Sequence CSV 451개 확정본 Git 관리 (`reports/team_projects/team01/main/sequences/`, 72,703 Frame · clip 평균 5.4초 · YOLO conf 0.968)
+- 자동 QA: AUTO_PASS 449 · CHECK 2 (manifest REVIEW) → Human QA: PASS 450 · EXCLUDE 1 (`T01_S05_A03_T01`, T06으로 대체)
+- Approved 450 (신호 15개 × 25 · N00 75) → Split Train 270 (S01 · S03 · S04) · Val 90 (S05) · Test 90 (S02) · Leakage check: OK
+- Frame 무작위 분할은 5명 · 450 clip 전부 겹침 → 사람 단위 분할이 필요한 근거
+- 구간 라벨 451 clip 자동 초안 (PASS 448 · REVIEW 2) · 팀 Feature G-01~G-10 확인표 · 5일차 Keypoint CSV 형식 내보내기
 
 ---
 
