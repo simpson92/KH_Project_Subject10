@@ -11,6 +11,10 @@ from __future__ import annotations
 # 출력: reports/team_projects/team01/main/webcam_log.csv
 #
 # 실행: uv run python scripts/day05_team_make_webcam_log.py
+# 빈 칸 한 번에 채우기 (모든 촬영을 같은 세팅으로 했을 때 — 이미 적힌 칸은 그대로, --force면 덮어씀)
+#   uv run python scripts/day05_team_make_webcam_log.py --cam-height 1.3 --cam-distance 2.0 \
+#       --operator-map S01=S05,S02=S04,S03=S04,S04=S03,S05=S01 --value-note "실측(11-19, 촬영 위치 재현)"
+#   --operator-map : 촬영된 사람=찍어 준 사람. 한 사람이 다 찍었으면 --operator S05
 import argparse
 import json
 import sys
@@ -34,6 +38,12 @@ def parse_args(argv=None):
     parser.add_argument("--review", default=str(MAIN_DIR / "dataset" / "team01_clip_review.csv"))
     parser.add_argument("--split-config", default=str(ROOT / "configs" / "team01_subject_split.json"))
     parser.add_argument("--output", default=str(MAIN_DIR / "webcam_log.csv"))
+    parser.add_argument("--cam-height", default="", help="카메라 높이 m (예: 1.3)")
+    parser.add_argument("--cam-distance", default="", help="카메라 ↔ 서는 위치 거리 m (예: 2.0)")
+    parser.add_argument("--operator", default="", help="촬영 진행자 S## (전원 같을 때)")
+    parser.add_argument("--operator-map", default="", help="촬영된 사람=진행자, 쉼표로 (S01=S05,S02=S04)")
+    parser.add_argument("--value-note", default="", help="채운 값의 출처를 note에 남김 (예: 실측 · 계획값)")
+    parser.add_argument("--force", action="store_true", help="이미 적힌 칸도 덮어씀")
     return parser.parse_args(argv)
 
 
@@ -73,6 +83,25 @@ def build_log(manifest: pd.DataFrame, review: pd.DataFrame | None, test_subjects
     return pd.DataFrame(rows, columns=COLUMNS)
 
 
+def fill_manual(log: pd.DataFrame, args) -> pd.DataFrame:
+    """--cam-height · --cam-distance · --operator(-map) 값으로 빈 칸 채우기."""
+    log = log.copy()
+    for col, value in (("cam_height_m", args.cam_height), ("cam_distance_m", args.cam_distance)):
+        if value:
+            float(value)   # 숫자가 아니면 여기서 멈춤
+            mask = (log[col].astype(str) == "") | bool(args.force)
+            log.loc[mask, col] = value
+    mapping = dict(x.split("=") for x in args.operator_map.split(",") if "=" in x)
+    if args.operator or mapping:
+        ops = log["person_id"].map(mapping).fillna(args.operator) if mapping else pd.Series(args.operator, index=log.index)
+        mask = ((log["operator"].astype(str) == "") | bool(args.force)) & (ops != "")
+        log.loc[mask, "operator"] = ops[mask]
+    if args.value_note and (args.cam_height or args.cam_distance):
+        tag = f"높이·거리: {args.value_note}"
+        log["note"] = log["note"].astype(str).map(lambda n: n if tag in n else (f"{n} · {tag}" if n else tag))
+    return log
+
+
 def main(argv=None) -> pd.DataFrame:
     args = parse_args(argv)
     manifest = pd.read_csv(args.manifest, encoding="utf-8-sig", keep_default_na=False)
@@ -86,6 +115,7 @@ def main(argv=None) -> pd.DataFrame:
             filled = log["file_name"].map(old[col]) if col in old else None
             if filled is not None:
                 log[col] = filled.where(filled.notna() & (filled != ""), log[col])
+    log = fill_manual(log, args)
     out.parent.mkdir(parents=True, exist_ok=True)
     log.to_csv(out, index=False, encoding="utf-8-sig")
     empty = {c: int((log[c].astype(str) == "").sum()) for c in MANUAL}

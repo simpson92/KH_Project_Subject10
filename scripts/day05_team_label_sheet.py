@@ -10,6 +10,9 @@ from __future__ import annotations
 # 실행
 #   uv run python scripts/day05_team_label_sheet.py --clip-id T01_S04_A03_T01 T01_S04_A15_T01
 #   uv run python scripts/day05_team_label_sheet.py --status REVIEW        # REVIEW clip만
+#   교차 검수용 (라벨 없이 Frame 번호만 = blind, 3 Frame = 0.1초마다):
+#   uv run python scripts/day05_team_label_sheet.py --blind --step 3 \
+#       --clips-from reports/team_projects/team01/main/labels/crosscheck/crosscheck_plan.csv
 import argparse
 import sys
 from pathlib import Path
@@ -34,6 +37,8 @@ def parse_args(argv=None):
     parser.add_argument("--output-dir", default=str(MAIN_DIR / "label_sheets"))
     parser.add_argument("--clip-id", nargs="+", default=None)
     parser.add_argument("--status", default="", help="이 qa_status인 clip만 (예: REVIEW)")
+    parser.add_argument("--clips-from", default="", help="clip_id 열이 있는 CSV (예: crosscheck_plan.csv)")
+    parser.add_argument("--blind", action="store_true", help="라벨 · 색을 숨기고 Frame 번호만 (교차 검수)")
     parser.add_argument("--step", type=int, default=4)
     parser.add_argument("--cols", type=int, default=14)
     return parser.parse_args(argv)
@@ -47,7 +52,8 @@ def frame_labels(rows: pd.DataFrame) -> dict[int, str]:
     return out
 
 
-def make_sheet(video: Path, labels: dict[int, str], step: int, cols: int) -> np.ndarray | None:
+def make_sheet(video: Path, labels: dict[int, str], step: int, cols: int,
+               blind: bool = False) -> np.ndarray | None:
     cap = cv2.VideoCapture(str(video))
     tiles, i = [], 0
     while True:
@@ -56,11 +62,15 @@ def make_sheet(video: Path, labels: dict[int, str], step: int, cols: int) -> np.
             break
         if i % step == 0:
             label = labels.get(i, "?")
-            color = COLORS.get(label, SIGNAL_COLOR)
             tile = cv2.resize(frame, (90, 160))
-            cv2.rectangle(tile, (0, 0), (89, 159), color, 4)
-            cv2.putText(tile, str(i), (4, 14), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
-            cv2.putText(tile, label, (4, 154), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
+            if blind:   # 검수자가 자동 라벨을 보고 따라 적지 않게 Frame 번호만
+                cv2.rectangle(tile, (0, 0), (89, 20), (0, 0, 0), -1)
+                cv2.putText(tile, str(i), (4, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
+            else:
+                color = COLORS.get(label, SIGNAL_COLOR)
+                cv2.rectangle(tile, (0, 0), (89, 159), color, 4)
+                cv2.putText(tile, str(i), (4, 14), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
+                cv2.putText(tile, label, (4, 154), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
             tiles.append(tile)
         i += 1
     cap.release()
@@ -75,6 +85,8 @@ def main(argv=None) -> int:
     args = parse_args(argv)
     labels = pd.read_csv(args.labels, keep_default_na=False)
     clips = args.clip_id or sorted(labels["clip_id"].unique())
+    if args.clips_from:
+        clips = pd.read_csv(args.clips_from, encoding="utf-8-sig")["clip_id"].tolist()
     if args.status:
         status = labels.groupby("clip_id")["qa_status"].first()
         clips = [c for c in clips if status.get(c) == args.status.upper()]
@@ -86,7 +98,8 @@ def main(argv=None) -> int:
         if not video.exists():
             print(f"[SKIP] 영상 없음: {video}")
             continue
-        sheet = make_sheet(video, frame_labels(labels[labels["clip_id"] == clip]), args.step, args.cols)
+        sheet = make_sheet(video, frame_labels(labels[labels["clip_id"] == clip]), args.step, args.cols,
+                           blind=args.blind)
         if sheet is not None:
             cv2.imwrite(str(out / f"{clip}.jpg"), sheet, [cv2.IMWRITE_JPEG_QUALITY, 75])
             saved += 1
