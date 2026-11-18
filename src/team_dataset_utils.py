@@ -71,6 +71,16 @@ ALLOWED_DECISIONS = {"PASS", "RESHOOT", "EXCLUDE"}
 HUMAN_COLUMNS = ["human_decision", "human_note"]
 
 
+# 5일차 수업 Keypoint CSV 형식으로 내보낸 파일 · 영상 위치 (둘 다 data/ 아래라 Git 제외)
+KEYPOINT_DIR_REL = "data/team_projects/team01/main/keypoints"
+VIDEO_DIR_REL = "data/team_projects/team01/main/rgb/videos"
+
+
+def keypoint_csv_path(subject_id: str, clip_id: str) -> str:
+    """수업 26번처럼 Subject 폴더 아래 clip 하나 = CSV 하나."""
+    return f"{KEYPOINT_DIR_REL}/{subject_id}/{clip_id}.csv"
+
+
 def train_label(action_id: str) -> str:
     """학습에 쓰는 라벨. 일상 동작 D01~D03은 N00 하나로 묶습니다."""
     action_id = str(action_id).upper()
@@ -181,6 +191,11 @@ def build_qa_table(manifest: pd.DataFrame, sequence_dir: Path, threshold: float 
             "capture_set": item.get("capture_set", ""),
             "video_file": item["video_file"],
             "sequence_csv": Path(shown).as_posix(),
+            # 5 · 6일차 수업 코드가 읽는 이름 (subject · take · keypoint_csv · video_path)
+            "subject": item["subject_id"],
+            "take": item["take_id"],
+            "keypoint_csv": keypoint_csv_path(item["subject_id"], clip_id),
+            "video_path": f"{VIDEO_DIR_REL}/{item['video_file']}",
             "manifest_review": item.get("review_status", ""),
             "manifest_reason": item.get("review_reason", ""),
             **qa,
