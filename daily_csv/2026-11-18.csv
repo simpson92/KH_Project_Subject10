@@ -14,6 +14,6 @@
 2026-11-18,Day 05,저녁,S05,코드,팀 Feature G-01~G-10 (48-D) + 라벨별 평균 확인표,"G-02 · G-01 · G-06 · G-10은 설계대로, G-04 · G-08 · G-09는 기대와 다름 (A15 ↔ 팔짱은 G-01로 갈림)",src/team_feature_utils.py · scripts/day05_team_signal_feature_check.py · main/features/,,,완료
 2026-11-18,Day 05,저녁,S05,코드,Sequence → 5일차 수업 Keypoint CSV 형식 내보내기 · manifest에 수업 열 추가,378개 (x_norm = x_px ÷ 영상 너비),scripts/day05_team_export_keypoints.py,,,완료
 2026-11-18,Day 05,저녁,S05,문서,촬영 로그 webcam_log.csv 자동 채움 · 02 v2.3 · 03 v2.3 · 05 v2.1 (세로 입력 · 업로드 API 계획),451행 — 카메라 높이 · 거리 · 진행자는 비움,scripts/day05_team_make_webcam_log.py · main/webcam_log.csv · docs/referee/02 · 03 · 05,,,완료
-2026-11-18,Day 05,다음,각자,할 일,1차 촬영 73개 STEP 4 → 5일차 스크립트 다시 실행,Approved 450 · Split 270 / 90 / 90,보고서 8장 명령,,,대기
+2026-11-18,Day 05,저녁,S05,데이터 QA,Sequence CSV 451개 확정본 Git 추가 · 5일차 결과물 451개 기준으로 다시 실행 · 결정 기록 문서,Approved 450 · Split 270 / 90 / 90 (finish_day05.sh),reports/team_projects/team01/main/sequences/ · docs/referee/team01_decision_log.md,,,완료
 2026-11-18,Day 05,다음,전원,할 일,라벨 교차 검수 10% (모아보기) · webcam_log.csv 카메라 높이 · 거리 · 진행자 기입,02 문서 8장 5단계 · 03 문서 9.1,,,,대기
 2026-11-18,Day 05,다음,전원,할 일,6일차 — 30-step × 38 = 1140-D · RF 300 · Val Accuracy / Macro F1 / Confusion Matrix + E-01 38 ↔ 48-D · clip 전체 ↔ 신호 구간,Test S02는 마지막에 한 번,,,,대기
