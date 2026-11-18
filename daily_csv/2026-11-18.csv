@@ -1,0 +1,15 @@
+﻿date,course_day,time,owner,category,task,result,outputs,commit,pr,status
+2026-11-18,Day 05,10:23,S03,수업,5일차 Keypoint Dataset · QA · Subject Split 실습 25~32,미니 챌린지 전,scripts/25~32 · configs/day05_subject_split.json,b973330,,완료
+2026-11-18,Day 05,오전,전원,결정,교수님 진행 순서 확인 — 촬영 끝 → 분할 · QA · 보완 → 학습 → FastAPI에 영상 1~2개 업로드 테스트,,,,,완료
+2026-11-18,Day 05,15:00경,S04,촬영,본 촬영 3차 — S04 90개 (폰 원본 4K HEVC → 1080×1920 30 FPS 변환),PASS 90 · conf 평균 0.971 → 누적 271,main_shoot_1118_s04_report.md,bfcc6fb,#11,완료
+2026-11-18,Day 05,17:06,S02,문서,README 수정,,README.md,e2d6189,#12,완료
+2026-11-18,Day 05,17:11,S04,문서,RGB 촬영 설정 기록 (이미지 → 영상 설정으로 교체),FHD 30 FPS 등 촬영 설정,docs/rgb_video_capture_log.md,bf1dd5d · d6a5830 · 218b8e2,#13 · #14,완료
+2026-11-18,Day 05,오후,S02 · S03,촬영,본 촬영 4차 — S02 90 · S03 80,PASS 170 · S03 A12 · A13 10개 빠짐 발견 · 원본 HDR(HLG),main_shoot_1118_s02_s03_report.md,4d02f6c,#15,완료
+2026-11-18,Day 05,16:40,S03,촬영,S03 보충 — A12 후킹 5 · A13 백코트 5,10개 PASS (conf 0.973) → 누적 451 · 본 촬영 끝,main_shoot_1118_s02_s03_report.md 6장,713a06c,#16,완료
+2026-11-18,Day 05,18:53,S05,코드,5일차 흐름을 1조 본 촬영에 적용 (실습 27~32 기반),동작 18개별 자동 QA · Human QA 451개 · Approved · Subject-wise Split · Leakage OK,scripts/day05_team_*.py · src/team_dataset_utils.py · reports/team_projects/team01/main/dataset/,459e190,#16,완료
+2026-11-18,Day 05,18:53,S05,문서,데이터 준비 보고서 (4일차 ⑧ + 5일차 Summary + 4 · 5일차 점검표),,reports/team_projects/team01/team01_data_preparation_report.md,459e190,#16,완료
+2026-11-18,Day 05,19:00,전원,결정,Validation = S05 확정 (학습 S01 · S03 · S04 / 테스트 S02) · T01_S01_A10_T04 재촬영 대신 PASS,Approved 450 (완료 후) · Train 270 / Val 90 / Test 90,docs/referee/04 v2.3 · configs/team01_subject_split.json,,,완료
+2026-11-18,Day 05,19:00,S05,문서,daily_csv 작업 기록 시작 (11-13 ~ 11-18),,daily_csv/,,,완료
+2026-11-18,Day 05,다음,각자,할 일,1차 촬영 73개 STEP 4 → 5일차 스크립트 다시 실행,Approved 450 · Split 270 / 90 / 90,보고서 8장 명령,,,대기
+2026-11-18,Day 05,다음,S05,할 일,팀 Feature G-01~G-10 코드 · 손 Feature · webcam_log.csv 실측값,4일차 남은 항목,,,,대기
+2026-11-18,Day 05,다음,전원,할 일,6일차 — 30-step × 38 = 1140-D · RF 300 · Val Accuracy / Macro F1 / Confusion Matrix,Test S02는 마지막에 한 번,,,,대기

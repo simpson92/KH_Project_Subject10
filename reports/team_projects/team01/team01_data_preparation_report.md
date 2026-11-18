@@ -65,16 +65,17 @@
 
 | human_decision | 개수 | clip · 이유 |
 | --- | --- | --- |
-| PASS | 449 | 동작 · Take 순서 맞음. 바로잡은 2개(S01 A12_T03 · A13_T05)는 note에 기록 |
-| RESHOOT | 1 | `T01_S01_A10_T04` — FPS 29.31 · 끝 차렷 잘림. **킥 동작은 끝까지 있음** → S01 재촬영이 어려우면 PASS로 바꿔도 됨 (완료 후 Train A10이 14 → 15) |
+| PASS | 450 | 동작 · Take 순서 맞음. 바로잡은 2개(S01 A12_T03 · A13_T05)는 note에 기록 |
+| PASS (CHECK) | (위 450에 포함) | `T01_S01_A10_T04` — FPS 29.31 · 끝 차렷 잘림이지만 **킥 동작은 끝까지 있음** → 재촬영 대신 PASS (11-18 팀 결정) |
+| RESHOOT | 0 | |
 | EXCLUDE | 1 | `T01_S05_A03_T01` — C01 손끝이 화면 밖. `T06`이 대체 |
 
 `day05_team_validate_review.py` 추가 규칙: CHECK인데 note 없이 PASS → 실패 · NO_SEQUENCE 남아 있으면 실패 (`--allow-no-sequence`로 임시 통과)
 
 ### 4.3 Approved Manifest (`team01_approved_manifest.csv`)
 
-- *(현재)* 377개 — PASS 이면서 Sequence CSV가 있는 clip
-- *(완료 후)* **449개** — 신호 A01~A15 각 25개(A10만 24) · N00 75개
+- *(현재)* 378개 — PASS 이면서 Sequence CSV가 있는 clip
+- *(완료 후)* **450개** — 신호 A01~A15 각 25개 · N00 75개
 
 ## 5. 데이터 분할 (실습 30 · 31번 → `day05_team_subject_split.py` · `day05_team_check_leakage.py`)
 
@@ -82,8 +83,8 @@
 
 | split | Subject | clip *(현재)* | clip *(완료 후)* | 이유 |
 | --- | --- | --- | --- | --- |
-| Train | S01 · S03 · S04 | 233 | 269 | S01 = VICON 배우 → 학습 고정 (04 문서 8.2). S03(HDR) · S04(SDR) 둘 다 넣어 두 화질을 학습 |
-| Validation | **S05** (제안) | 54 | 90 | S03 · S04 · S05 중 1명(04 문서 8.2). S03을 빼면 HDR 영상이 Train에 하나도 없고 Test(S02)만 HDR이 됨 → S05 |
+| Train | S01 · S03 · S04 | 234 | 270 | S01 = VICON 배우 → 학습 고정 (04 문서 8.2). S03(HDR) · S04(SDR) 둘 다 넣어 두 화질을 학습 |
+| Validation | **S05** (11-18 확정, 04 문서 v2.3) | 54 | 90 | S03 · S04 · S05 중 1명(04 문서 8.2). S03을 빼면 HDR 영상이 Train에 하나도 없고 Test(S02)만 HDR이 됨 → S05 |
 | Test | S02 | 90 | 90 | 03 문서 W9 — 마지막에 한 번만 |
 
 - split × 라벨 clip 수 → `main/dataset/splits/split_counts.csv`
@@ -94,15 +95,16 @@
 
 | | Frame 무작위 (`train_test_split` 0.2 · seed 42) | 사람 단위 (1조) |
 | --- | --- | --- |
-| Train / Test Frame | 49,321 / 12,331 | — |
+| Train / Test Frame | 49,457 / 12,365 | — |
 | Subject overlap | **5명 전부** | 0 |
-| Clip overlap | **test clip 377개 중 377개** | 0 |
+| Clip overlap | **test clip 378개 중 378개** | 0 |
 
 → Frame을 섞으면 바로 옆 Frame(1/30초 차이)이 Train · Test에 같이 들어가 6일차 점수가 부풀려짐
 
 ### 5.2 6일차 전에 알아 둘 것
 
-- **N00가 신호보다 3배 많음** (일상 동작 3개를 하나로 묶어서, Train *(현재)* 39 vs 13 · *(완료 후)* 45 vs 15) → 6일차 RF에 `class_weight="balanced"` 또는 N00 줄이기 검토
+- **N00가 신호보다 3배 많음** (일상 동작 3개를 하나로 묶어서, Train *(현재)* 39 vs 13 · *(완료 후)* 45 vs 15) → 04 문서 기준(N00은 신호 1클래스의 1~2배, 넘치면 `class_weight` 또는 평가용 보관)을 넘음. 04 문서 7장 RF 설정에 이미 `class_weight="balanced"`가 있어 6일차는 그대로 시작하고, N00 Recall · Precision이 이상하면 N00을 줄여 비교
+- **C01 지름길 주의** — 신호 clip에는 앞에 C01 손 들기가 있고 일상 동작(D01~D03)에는 없음 (03 문서). clip 전체로 학습하면 모델이 "손을 들었나"만 보고 N00을 맞힐 수 있음 → Confusion Matrix에서 N00이 지나치게 완벽하면 의심, 나중에 구간 라벨로 C01을 잘라 비교
 - Validation이 1명이라 점수가 그 사람에게 치우칠 수 있음 → 필요하면 S03 · S04 · S05를 돌아가며 Validation (04 문서 8.2 교차 검증)
 
 ## 6. VICON 활용 계획
@@ -127,6 +129,8 @@
 | ⑧ | 결과 보고서 MD | ✅ | 이 문서 |
 | — | 좌우 반전 증강 분리 | ⬜ | 아직 증강 안 함 — 만들 때 Train에만 |
 | — | 촬영 로그 `webcam_log.csv` (카메라 높이 · 거리) | ⬜ | 03 문서 9.1 양식만 있음. 실제 값 기록 없음 → 기억나는 값이라도 남기기 권장 |
+| — | 구간 라벨 `labels.csv` (C01 손 들기 · 신호 구간, 02 문서 L1) | ⬜ | 지금은 clip 단위 라벨만 있음. 6일차 기본(clip 전체 30-step)은 clip 라벨로 충분, 구간 라벨은 7일차 실시간 Sliding Window 전에 필요 |
+| — | 05 문서 실시간 입력 세로(W7) 반영 | ⬜ | 결정 기록 A5의 할 일. FastAPI 업로드 테스트 전에 frame 높이 > 너비 확인 규칙 추가 |
 
 ### 5일차 (교재 49장 최종 체크리스트)
 
@@ -135,7 +139,7 @@
 | MP4 검사 · Keypoint CSV | 🟡 | 실습 26번 Keypoint CSV 대신 STEP 4 Sequence CSV 사용 (같은 `conf_*` · 좌표 포함). 73개 남음 |
 | 자동 QA (AUTO_PASS / CHECK) | ✅ | 동작별 중요 관절 18개 정의 |
 | Human QA | ✅ | 451개 결정 · note |
-| Approved Manifest | 🟡 | 377 → STEP 4 후 449 |
+| Approved Manifest | 🟡 | 378 → STEP 4 후 450 |
 | Subject-wise Split · Leakage | ✅ | Leakage check: OK |
 | Random Frame Split 비교 | ✅ | 5.1 |
 | Mini Challenge | ➖ | 1조는 본 촬영 451개에 같은 흐름을 적용한 것으로 대신 |
@@ -154,14 +158,14 @@ uv run python scripts/day04_build_team_sequences.py --manifest $M --video-dir $V
 # 2) 5일차 흐름 (Human QA 결정은 그대로 남음)
 uv run python scripts/day05_team_keypoint_qa.py
 uv run python scripts/day05_team_validate_review.py          # NO_SEQUENCE 0이면 OK
-uv run python scripts/day05_team_approved_manifest.py        # 449
-uv run python scripts/day05_team_subject_split.py            # 269 / 90 / 90
+uv run python scripts/day05_team_approved_manifest.py        # 450
+uv run python scripts/day05_team_subject_split.py            # 270 / 90 / 90
 uv run python scripts/day05_team_check_leakage.py
 uv run python scripts/day05_team_frame_split_demo.py
 ```
 
 ## 9. 다음 단계
 
-- **6일차 전**: 73개 STEP 4 → 449개 확정 · Validation S05 팀 확정 (04 문서 8.2 갱신) · A10_T04 PASS/재촬영 결정
+- **6일차 전**: 73개 STEP 4 → 450개 확정 (Validation S05 · A10_T04 PASS는 11-18 결정 완료)
 - **6일차**: 30-step × 38 = 1140-D · RF 300 · Val Accuracy / Macro F1 / Confusion Matrix (Test S02는 마지막에 한 번)
 - **그 다음**: G-01~G-10 코드 + 손 검출 Feature → 38-D 대비 개선 비교 (04 문서 F1) → 작은 모델로 FastAPI 업로드 테스트 1~2개

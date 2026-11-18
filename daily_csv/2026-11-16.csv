@@ -1,0 +1,16 @@
+﻿date,course_day,time,owner,category,task,result,outputs,commit,pr,status
+2026-11-16,Day 03,09:58,S03,수업,3일차 관절각도 · 정규화 · 38-D Frame Feature (실습 11~17),,scripts/11~17 · src/feature_utils.py,0294efb,,완료
+2026-11-16,Day 03,09:58,S03,코드,18번 영상 Frame Feature 추출,교재 18번 칸 오류 → 설명 기준으로 다시 작성,scripts/18_video_frame_features.py,5d0faeb,,완료
+2026-11-16,Day 03,12:08,S03,문서,3일차 정규화 실측 · D2 기준을 어깨 폭으로 변경,DOC-01 v0.8,docs/referee/01 · reports/day03/challenge/feature_design.md,4bd8eca,,완료
+2026-11-16,Day 03,12:19,S03,문서,Mini Challenge 그래프 관찰 (팔꿈치 각도 튐 · 사람별 시점 차이),,reports/day03/challenge/feature_design.md,5122b3f,,완료
+2026-11-16,Day 03,12:22,S03,문서,README 작성 (1~3일차 학습 내용 · 1조 안내),,README.md,3db61a2,,완료
+2026-11-16,Day 03,14:21,S03,코드,17번 1조 규칙 — U파울 = 손목이 코보다 위 + 손목 거리 < 1.0,,scripts/17_referee_rule.py · reports/day03/challenge/feature_design.md,be9f039,,완료
+2026-11-16,Day 03,14:54,S03,문서,README에 data 폴더 구조 · 17번 규칙 추가,,README.md,51041fd · 8e3c535,,완료
+2026-11-16,Day 03,15:20,S01,문서,설계 문서 01~04 2차 배포 v2.0 + 문서 버전 기록 CSV,문서 세트 버전 통일,docs/referee/01~04 · doc_versions.csv,8589987,,완료
+2026-11-16,Day 03,15:28,S01,문서,02~04 새 이름 규칙 반영 · VICON clip_id · 배포노트 · 05 아키텍처 추가,T01_S##_A##_T## 규칙,docs/referee/00 · 02~05 · scripts/vicon_00 · 01,ec5ed32,#1,완료
+2026-11-16,Day 03,16:04,S05,테스트,feature_utils · U파울 규칙 단위 테스트,39 passed,tests/,b6bd011,#2,완료
+2026-11-16,Day 03,16:04,S05,코드,18번 대표 인물을 가장 큰 BBox로 선택 (D6 반영),,scripts/18_video_frame_features.py · src/pose_utils.py · tests/test_main_person.py,cfe6b2e,#2,완료
+2026-11-16,Day 03,16:04,S05,코드,Feature 타임라인 그래프 · 팔꿈치 각도 튐 탐지,,scripts/day03_plot_feature_timeline.py,f017755,#2,완료
+2026-11-16,Day 03,16:04,S05,코드,스모크 영상 전체 QA 일괄 처리 (video_qa.csv) + 원본 이름 인식 · 실명 안 남기기,,scripts/day03_batch_video_qa.py,72d3052 · 329268e,#2,완료
+2026-11-16,Day 03,16:04,S05,문서,README에 테스트 · D6 · 타임라인 사용법,,README.md,2258b07,#2,완료
+2026-11-16,Day 03,16:46,S05,코드,4일차 준비 — clip_id 이름 규칙 · clip manifest 생성,스모크 100개 manifest,scripts/day04_make_clip_manifest.py · configs/team01_clip_manifest.csv,8cc340d · fecd3ca,#3,완료
