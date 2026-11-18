@@ -68,11 +68,11 @@
 | --- | --- | --- | --- |
 | S01 | Train | 90 | ✅ |
 | S02 | Test | 90 | ✅ 이번 |
-| S03 | Train | 80 | 🟡 **A12 · A13 각 5개 보충 촬영 필요** |
+| S03 | Train | 90 | ✅ 80 + 보충 10 (6장) |
 | S04 | Train | 90 | ✅ |
 | S05 | Validation | 91 | ✅ (A03만 6개) |
 
-누적 **441개** (목표 450 중 440개 = 98%). 남은 것: `T01_S03_A12_T01~T05`, `T01_S03_A13_T01~T05`
+누적 **451개** (목표 450 + S05 A03 대체 1개) — **본 촬영 끝**. ~~남은 것: `T01_S03_A12_T01~T05`, `T01_S03_A13_T01~T05`~~ → 6장 보충 완료
 
 ### 보충 촬영 메모 (S03)
 - 같은 장소 · 같은 옷 · 같은 폰 위치. A12(골반 높이 당기기)와 A13(손가락으로 가리키며 흔들기)은 서로 헷갈리기 쉬우니 **A12 5개 → A13 5개** 순서로 붙여서
@@ -90,3 +90,18 @@ uv run --with mediapipe python scripts/day04_hand_detect_check.py --manifest $M 
   --sequence-dir $O/sequences --output-dir $O/tables --scales 1.0 --modes crop
 uv run python scripts/day04_pose_conf_report.py
 ```
+
+## 6. 보충 촬영 (S03 A12 · A13, 11-18 오후)
+
+| 항목 | 결과 |
+| --- | --- |
+| 개수 | 10 (A12 후킹 T01~T05 → A13 백코트 T01~T05, 촬영 순서 = Take 순서) |
+| 원본 | 1080p HEVC · rotate 90 · **HDR HLG** (S03 앞 80개와 같음) → 2장과 같은 명령으로 1080×1920 · 30 FPS 변환 |
+| 분류 | 영상마다 9장 strip으로 확인 — A12(골반 높이 팔 당기기) 5개 · A13(손가락 가리키며 흔들기) 5개 섞임 없음 |
+| STEP 2 | 10/10 READY (FPS 30.0 · Frame 빠짐 없음) |
+| STEP 4 | 1,719 Frame · pose_ok 100% · 여러 사람 Frame 0 |
+| YOLO conf | clip 평균 0.973 · 손목 최솟값 0.925 · 발목 최솟값 0.761 → **PASS 10 / CHECK 0** |
+| 손 검출 | A12 왼 100% / 오른 96.9% · A13 왼 100% / 오른 95.2% (어깨 폭 중앙값 262 px) |
+
+manifest `configs/team01_main_manifest.csv` 에 10행 추가 → **451행**, `capture_set = main_1118`
+
