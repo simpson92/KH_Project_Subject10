@@ -61,7 +61,6 @@ reports/team_projects/team01/sequences/*.csv
 
 # Generated team01 main shoot results (본 촬영, 스모크와 분리)
 reports/team_projects/team01/main/tables/*.csv
-reports/team_projects/team01/main/sequences/*.csv
 reports/team_projects/team01/main/keyframes/
 reports/team_projects/team01/main/label_sheets/
 
