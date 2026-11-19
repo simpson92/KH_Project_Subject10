@@ -36,3 +36,4 @@ T10-G1-DOC-04,04_특징_모델_설계서.md,2.3,2026-11-18,용훈,,,"8.2 검증 
 T10-G1-DOC-02,02_라벨링_가이드.md,2.3,2026-11-18,용훈,,,"웹캠 labels.csv 자동 초안 · 검증 스크립트: 6.1 경로, 6.2 labeler = S##/auto, 7장 day05_team_validate_labels.py"
 T10-G1-DOC-05,05_시스템_아키텍처.md,2.1,2026-11-18,용훈,,,"W7 세로 1080×1920: RP-1 방향 확인 · 회전, API-07 업로드 테스트(계획), ER-07"
 T10-G1-DOC-03,03_웹캠_촬영_계획서.md,2.3,2026-11-18,용훈,,,"8장 webcam_log.csv 위치 = reports/team_projects/team01/main/ (자동 채움 스크립트), 9.1 operator = S##"
+T10-G1-DOC-02,02_라벨링_가이드.md,2.4,2026-11-19,용훈,,,8장 5단계 교차 검수 판정 역할: 검수자 OK · RESHOOT / PM FIX (REVIEW clip · 0.2초 초과 clip) · note PM:
