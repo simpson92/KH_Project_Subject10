@@ -1,0 +1,6 @@
+﻿clip_id,true_label,pred_label_baseline,pred_label_e01_48d,change
+T01_S05_A04_T02,A04,A06,A04,고쳐짐
+T01_S05_D03_T05,N00,A11,N00,고쳐짐
+T01_S05_A07_T01,A07,A07,A05,새로 틀림
+T01_S05_A07_T02,A07,A07,A05,새로 틀림
+T01_S05_A07_T03,A07,A07,A05,새로 틀림

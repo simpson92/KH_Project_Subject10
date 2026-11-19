@@ -1,0 +1,11 @@
+{
+  "feature_set": "base38",
+  "sequence_steps": 30,
+  "min_valid_frames": 10,
+  "label_column": "train_label",
+  "labels": ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10", "A11", "A12", "A13", "A14", "A15", "N00"],
+  "random_state": 42,
+  "n_estimators": 300,
+  "max_depth": null,
+  "class_weight": "balanced"
+}

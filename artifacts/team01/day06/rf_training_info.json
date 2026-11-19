@@ -1,0 +1,55 @@
+{
+  "trained_at": "2026-11-19 15:15:00",
+  "train_csv": "data/team_projects/team01/main/day06/sequences/train.csv",
+  "train_subjects": [
+    "S01",
+    "S03",
+    "S04"
+  ],
+  "train_clips": 270,
+  "feature_count": 1140,
+  "sequence_steps": 30,
+  "classes": [
+    "A01",
+    "A02",
+    "A03",
+    "A04",
+    "A05",
+    "A06",
+    "A07",
+    "A08",
+    "A09",
+    "A10",
+    "A11",
+    "A12",
+    "A13",
+    "A14",
+    "A15",
+    "N00"
+  ],
+  "class_counts": {
+    "A01": 15,
+    "A02": 15,
+    "A03": 15,
+    "A04": 15,
+    "A05": 15,
+    "A06": 15,
+    "A07": 15,
+    "A08": 15,
+    "A09": 15,
+    "A10": 15,
+    "A11": 15,
+    "A12": 15,
+    "A13": 15,
+    "A14": 15,
+    "A15": 15,
+    "N00": 45
+  },
+  "model": {
+    "type": "RandomForestClassifier",
+    "n_estimators": 300,
+    "max_depth": null,
+    "class_weight": "balanced",
+    "random_state": 42
+  }
+}
