@@ -1,5 +1,14 @@
 ﻿date,course_day,time,owner,category,task,result,outputs,commit,pr,status
-2026-11-19,Day 06,08:50,S05,데이터 QA,구간 라벨 교차 검수 준비 — 표본 45개(10%) · 1인 9개 배정(자기 영상 제외) · blind 모아보기 · 비교/반영 스크립트 · 팀원 안내서 PDF,REVIEW 2 · 검증 경고 3 · 신호 15×2 · 일상 3 · 혼동 동작 7,scripts/day05_team_make_crosscheck.py · day05_team_label_crosscheck.py · main/labels/crosscheck/,,,완료
-2026-11-19,Day 06,08:50,S05,코드,webcam_log.csv 빈 칸 채우기 옵션 (--cam-height · --cam-distance · --operator-map · --value-note),이미 적힌 칸은 지킴 (--force면 덮어씀),scripts/day05_team_make_webcam_log.py,,,완료
+2026-11-19,Day 06,08:50,S05,데이터 QA,구간 라벨 교차 검수 준비 — 표본 45개(10%) · 1인 9개 배정(자기 영상 제외) · blind 모아보기 · 비교/반영 스크립트 · 팀원 안내서 PDF,REVIEW 2 · 검증 경고 3 · 신호 15×2 · 일상 3 · 혼동 동작 7,scripts/day05_team_make_crosscheck.py · day05_team_label_crosscheck.py · main/labels/crosscheck/,fa4cd8c,#20,완료
+2026-11-19,Day 06,08:50,S05,코드,webcam_log.csv 빈 칸 채우기 옵션 (--cam-height · --cam-distance · --operator-map · --value-note),이미 적힌 칸은 지킴 (--force면 덮어씀),scripts/day05_team_make_webcam_log.py,fa4cd8c,#20,완료
+2026-11-19,Day 06,10:13,S03,수업,6일차 Sequence Dataset · RF Baseline 실습 33~39 (18 clip · 6동작),Val S02 Acc 0.5000 · Macro F1 0.4444 (교재 0.6667 / 0.5556 — 5일차 Keypoint 값 차이),scripts/33~39 · src/sequence_utils.py · configs/day06_baseline.json,567f7fe,,완료
+2026-11-19,Day 06,11:26,S03,데이터 QA,"구간 라벨 교차 검수 9개 제출 (blind 모아보기, 자기 영상 제외)",9개 모두 OK · 정지 신호 끝 = 풀리기 직전 칸 (안내서 예시 기준),팀 드라이브 crosscheck_S03.csv (Git 아님),,,완료
+2026-11-19,Day 06,11:42,S03,수업,6일차 Mini Challenge (sequence_steps 30 → 15) · Test 40번 · Summary · README Day 06,15 Step Val 0.6667 / 0.5833 → 30 Step으로 되돌림 · Test S03 1.0000 / 1.0000,scripts/40_evaluate_test.py · reports/day06/,25d6e63,,완료
+2026-11-19,Day 06,12:34,S03,Git,"교과10 실습 파일을 개인 레포로 분리 1단계 (filter-repo로 복사, 팀 레포는 그대로)",개인 레포 KH_Project_Subject1010 — 파일 70 · 커밋 61 · 테스트 51 passed,개인 레포 (팀 레포 변경 없음),,,완료
+2026-11-19,Day 06,15:20,S03,코드,"1조 6일차 RF Baseline — Keypoint 내보내기 450 → Sequence 270 / 90 / 90 (30 Step × 38-D = 1,140) → RF 16클래스 · balanced → Val S05 평가 (실습 33~37 기반)",Val Acc 0.9000 · Macro F1 0.8981 (81/90) · 오답 A04→A06 4 · D03→A11 3 · D03→A14 1 · A07→A05 1 · Test는 --final 잠금 · 테스트 164 passed,scripts/day06_team_build_sequences.py · day06_team_train_rf.py · day06_team_evaluate.py · configs/team01_day06_baseline.json · main/day06/,8037e13,,완료
+2026-11-19,Day 06,15:48,S03,실험,E-01 38-D ↔ 48-D (G-01~G-10) — 같은 조건 · Val S05 · seed 10개 재학습 비교,48-D Acc 0.8889 · F1 0.8762 (seed 42) · seed 10개 평균 Acc 0.8889 vs 38-D 0.8756 · A04 +0.20 · N00 +0.07 · A07 −0.60 (A07→A05 4) · 차이 clip 1~2개 · 테스트 171 passed,scripts/day06_team_compare.py · configs/team01_day06_e01_48d.json · main/day06/e01_48d/ · main/day06/compare/,f2bfefd,,완료
 2026-11-19,Day 06,다음,전원,할 일,라벨 교차 검수 9개씩 (안내서 PDF) → PM 비교 · 반영,7일차 실시간 수업 전,main/labels/crosscheck/crosscheck_S0X.csv,,,대기
-2026-11-19,Day 06,다음,전원,할 일,6일차 수업 33~40 실습 → 1조용 day06_team_* (38-D 기본 학습 · Val S05 · E-01 · Test S02 마지막),,,,,대기
+2026-11-19,Day 06,다음,전원,할 일,6일차 수업 33~40 실습 → 1조용 day06_team_* (38-D 기본 학습 · Val S05 · E-01 · Test S02 마지막),38-D 기본 · E-01 완료 (15:20 · 15:48 줄) → 신호 구간 비교 · Test S02 남음,,,,진행 중
+2026-11-19,Day 06,다음,전원,결정,E-01 결과로 F1 (38-D ↔ 48-D) 정하기,"seed 42는 38-D, seed 10개 평균은 48-D가 약간 높음 · A07 하락 확인 필요",main/day06/compare/,,,대기
+2026-11-19,Day 06,다음,S03,할 일,clip 전체 ↔ 신호 구간만 비교 (교차 검수 반영 후) → 최종 조건으로 Test S02 1번 → FastAPI 업로드 테스트 (05 API-07),,,,,대기
+2026-11-19,Day 06,다음,S03,Git,레포 분리 2단계 — 팀 레포에서 교과10 전용 파일 정리 (1조가 쓰는 17 · 18 · 23번 · src 공통 · sequence_utils는 남김),,docs/repo_split_2026-11-19.md,,,대기
