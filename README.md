@@ -378,6 +378,70 @@ STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Hu
 
 ---
 
+## Day 06 - Action Recognition Baseline 성능평가
+
+수업 실습 `scripts/33~40` — 5일차 Approved 18 clip으로 첫 Action Recognition 모델(Random Forest)을 학습하고 평가했습니다.
+
+### Input
+
+- 5일차 Approved Keypoint Dataset 18 clip (3 Subjects × 6 Actions × 1 Take)
+- S01 → Train · S02 → Validation · S03 → Test
+- Action: bend_return · leg_raise_lower · walk_turn_walk · drink_return · sit_stand · wave
+
+### Day 06 Pipeline
+
+```
+Keypoint CSV ─▶ 38-D Frame Feature ─▶ Sequence Resampling (frame_id 기준 30 Step) ─▶ 1,140-D (Clip 1개 = 1행)
+   ─▶ Random Forest (S01 Train) ─▶ S02 Validation ─▶ 오분류 추적 ─▶ Feature 비교 ─▶ Mini Challenge ─▶ S03 Test (마지막 1번)
+```
+
+### 주요 실행 파일
+
+| 파일 | 내용 | 출력 |
+| --- | --- | --- |
+| `configs/day06_baseline.json` | 30 Step · 최소 유효 Frame 10 · Tree 300 · max_depth null · seed 42 | — |
+| `src/sequence_utils.py` | Frame → 38-D, frame_id 기준 Resampling, 펼치기, 열 이름 | — |
+| `scripts/33_check_day06_inputs.py` | 5일차 Split · Keypoint CSV · Leakage 검사 | `reports/day06/tables/day06_input_check.csv` |
+| `scripts/34_build_sequence_dataset.py` | 18 clip → Sequence Dataset (1,148열 = 메타 8 + 1,140) | `data/day06/sequences/{train,val,test}.csv` |
+| `scripts/35_train_rf_baseline.py` | S01 6행으로 Random Forest 학습 | `artifacts/day06/rf_action_baseline.joblib` · `rf_feature_columns.json` · `rf_training_info.json` |
+| `scripts/36_evaluate_validation.py` | S02 Accuracy · Macro F1 · Confusion Matrix | `reports/day06/metrics/validation_*` |
+| `scripts/37_analyze_misclassified.py` | 오분류 clip에 원본 MP4 · Keypoint 경로 연결 | `reports/day06/misclassified/` |
+| `scripts/38_compare_static_vs_sequence.py` | 가운데 Frame 1개(38) vs 30 Step(1,140) | `reports/day06/experiments/static_vs_sequence.csv` |
+| `scripts/39_compare_feature_sets.py` | 좌표+각도(1,140) vs 좌표만(1,020) | `reports/day06/experiments/feature_set_comparison.csv` |
+| `scripts/40_evaluate_test.py` | 최종 조건으로 S03 Test 1번 | `reports/day06/metrics/test_*` |
+
+### 주요 결과 (내 실행, 2026-11-19)
+
+| 실험 | Feature | Accuracy | Macro F1 |
+| --- | --- | --- | --- |
+| Baseline Validation (S02) | 1,140 | 0.5000 | 0.4444 |
+| Static (가운데 Frame) | 38 | 0.6667 | 0.5556 |
+| Coordinates Only | 1,020 | 1.0000 | 1.0000 |
+| Mini Challenge 15 Step | 570 | 0.6667 | 0.5833 |
+| **Final Test (S03)** | 1,140 | **1.0000** | **1.0000** |
+
+- Baseline 오분류: walk_turn_walk → leg_raise_lower · drink_return → wave · wave → drink_return
+- 교재 결과(0.6667 / 0.5556)와 다른 이유: 5일차 Keypoint 추출 값 차이. Validation 6개라 clip 1개 = 0.1667
+- 최종 조건은 원래 Baseline(30 Step · 좌표+각도) 유지. Test 결과를 보고 조건을 다시 바꾸지 않음
+- Confidence 0.20~0.37 — 아주 작은 교육용 Dataset이라 이 숫자를 현업 성능으로 해석하지 않음
+- 정리: [`reports/day06/day06_summary.md`](reports/day06/day06_summary.md)
+
+### Mini Challenge
+
+`sequence_steps` 하나만 30 → 15로 바꿔 S02 Validation 비교 → 0.5000 / 0.4444 → 0.6667 / 0.5833 (wave 정답으로 바뀜, 맞다가 틀린 clip 없음).
+clip 1개 차이라 일반화하지 않고, 실험 후 30 Step으로 되돌림.
+자세한 내용: [`reports/day06/challenge/mini_challenge_result.md`](reports/day06/challenge/mini_challenge_result.md)
+
+### Git 제외
+
+`data/day06/` · `*.joblib` · `reports/day06/` 자동 생성 csv · Confusion Matrix png (`artifacts/`는 json 2개만 `git add -f`)
+
+### 다음 수업
+
+7일차에는 실시간 Frame을 계속 모아 Sliding Window를 만들고 실시간 Action Recognition으로 연결합니다.
+
+---
+
 ## 1조 프로젝트 — 농구 심판 수신호 인식 → 전광판
 
 수업 Pipeline을 농구 심판의 파울 수신호 15개 인식에 적용하는 조 프로젝트입니다.
