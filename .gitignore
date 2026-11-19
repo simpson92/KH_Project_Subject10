@@ -66,3 +66,9 @@ reports/team_projects/team01/main/label_sheets/
 
 # Generated Day05 results
 reports/day05/tables/*.csv
+
+# Generated Day06 results
+reports/day06/tables/*.csv
+reports/day06/metrics/*.csv
+reports/day06/misclassified/*.csv
+reports/day06/experiments/*.csv

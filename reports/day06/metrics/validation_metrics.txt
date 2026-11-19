@@ -1,0 +1,15 @@
+Validation Accuracy: 0.500000
+Validation Macro F1: 0.444444
+
+                 precision    recall  f1-score   support
+
+    bend_return       1.00      1.00      1.00         1
+   drink_return       0.00      0.00      0.00         1
+leg_raise_lower       0.50      1.00      0.67         1
+      sit_stand       1.00      1.00      1.00         1
+ walk_turn_walk       0.00      0.00      0.00         1
+           wave       0.00      0.00      0.00         1
+
+       accuracy                           0.50         6
+      macro avg       0.42      0.50      0.44         6
+   weighted avg       0.42      0.50      0.44         6
