@@ -137,3 +137,24 @@ def test_feature_mismatch_stops(tmp_path):
         json.dumps([*COLS, "extra"])
     )
     assert eval6.main(["--split", "val", *base]) == 1
+
+
+def test_run_name_reads_and_writes_subfolders(tmp_path):
+    base = _setup(tmp_path)
+    for d in ("art", "seq"):
+        sub = tmp_path / d / "e01_48d"
+        sub.mkdir()
+        for f in (tmp_path / d).iterdir():
+            if f.is_file():
+                (sub / f.name).write_bytes(f.read_bytes())
+    cfg = tmp_path / "cfg_run.json"
+    cfg.write_text(json.dumps({"labels": LABELS, "run_name": "e01_48d"}))
+    args = list(base)
+    args[args.index("--config") + 1] = str(cfg)
+    assert eval6.main(["--split", "val", *args]) == 0
+    assert (
+        (tmp_path / "out" / "e01_48d" / "val_metrics.txt")
+        .read_text(encoding="utf-8")
+        .startswith("1조 RF e01_48d")
+    )
+    assert not (tmp_path / "out" / "val_metrics.txt").exists()

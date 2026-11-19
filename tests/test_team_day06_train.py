@@ -98,3 +98,46 @@ def test_main_fails_without_train_csv(tmp_path):
         train6.main(["--config", str(cfg), "--train-csv", str(tmp_path / "none.csv")])
         == 1
     )
+
+
+def test_team48_run_uses_subfolders(tmp_path):
+    seq = tmp_path / "seq" / "e01_48d"
+    seq.mkdir(parents=True)
+    _train_df(steps=STEPS * 48 // 38 + 1).iloc[:, : 8 + STEPS * 48].to_csv(
+        seq / "train.csv", index=False
+    )
+    cfg = tmp_path / "cfg.json"
+    cfg.write_text(
+        json.dumps(
+            {
+                "run_name": "e01_48d",
+                "feature_set": "team48",
+                "sequence_steps": STEPS,
+                "labels": ["A01", "N00"],
+                "random_state": 42,
+                "n_estimators": 10,
+                "max_depth": None,
+                "class_weight": "balanced",
+            }
+        )
+    )
+    art = tmp_path / "art"
+    assert (
+        train6.main(
+            [
+                "--config",
+                str(cfg),
+                "--train-csv",
+                str(tmp_path / "seq" / "train.csv"),
+                "--artifact-dir",
+                str(art),
+            ]
+        )
+        == 0
+    )
+    info = json.loads(
+        (art / "e01_48d" / "rf_training_info.json").read_text(encoding="utf-8")
+    )
+    assert info["feature_count"] == STEPS * 48 and info["feature_set"] == "team48"
+    assert not (art / "rf_team_baseline.joblib").exists()
+    assert "48" in " ".join(train6.check_train(_train_df(), ["A01", "N00"], STEPS, 48))

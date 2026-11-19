@@ -22,6 +22,8 @@ from __future__ import annotations
 # 실행
 #   uv run python scripts/day06_team_evaluate.py                       # Validation S05
 #   uv run python scripts/day06_team_evaluate.py --split test --final  # 마지막 Test S02 (1번만)
+#   uv run python scripts/day06_team_evaluate.py --config configs/team01_day06_e01_48d.json   # E-01 48-D (Val)
+#   (설정에 run_name이 있으면 입력 · 모델 · 결과 모두 <run_name>/ 하위 폴더)
 import argparse
 import json
 import sys
@@ -153,10 +155,17 @@ def main(argv=None) -> int:
         return 1
 
     with open(args.config, encoding="utf-8") as f:
-        labels = list(json.load(f)["labels"])
+        config = json.load(f)
+    labels = list(config["labels"])
+    run = config.get("run_name", "")
+    run_label = run or "baseline"
     art_dir = Path(args.artifact_dir)
+    seq_dir = Path(args.seq_dir)
+    out_dir = Path(args.output_dir)
+    if run:  # 실험은 하위 폴더 (기본 38-D 결과는 그대로)
+        art_dir, seq_dir, out_dir = art_dir / run, seq_dir / run, out_dir / run
     model_path = art_dir / "rf_team_baseline.joblib"
-    seq_path = Path(args.seq_dir) / f"{args.split}.csv"
+    seq_path = seq_dir / f"{args.split}.csv"
     for path in (model_path, art_dir / "rf_feature_columns.json", seq_path):
         if not path.exists():
             print(f"[ERROR] 없음: {path}")
@@ -197,7 +206,6 @@ def main(argv=None) -> int:
 
     name = "Validation" if args.split == "val" else "Test"
     subjects = "·".join(sorted(df["subject"].unique()))
-    out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     pred.to_csv(
         out_dir / f"{args.split}_predictions.csv", index=False, encoding="utf-8-sig"
@@ -211,11 +219,11 @@ def main(argv=None) -> int:
     save_confusion(
         pred,
         labels,
-        f"Team01 RF Baseline - {name} ({subjects})",
+        f"Team01 RF {run_label} - {name} ({subjects})",
         out_dir / f"{args.split}_confusion_matrix.png",
     )
     lines = [
-        f"1조 RF Baseline — {name} ({subjects}, {len(pred)} clips)",
+        f"1조 RF {run_label} — {name} ({subjects}, {len(pred)} clips)",
         f"Model: {model_path.name} · Feature {len(feature_columns)}",
         f"Accuracy: {acc:.4f}",
         f"Macro F1: {macro_f1:.4f}",

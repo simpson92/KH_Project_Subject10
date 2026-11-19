@@ -17,7 +17,9 @@ from __future__ import annotations
 #       artifacts/team01/day06/rf_training_info.json       (설정 · 클래스별 개수, git add -f)
 #
 # 실행
-#   uv run python scripts/day06_team_train_rf.py
+#   uv run python scripts/day06_team_train_rf.py                                             # 38-D 기본
+#   uv run python scripts/day06_team_train_rf.py --config configs/team01_day06_e01_48d.json  # E-01 48-D
+#   (설정에 run_name이 있으면 입력 sequences/<run_name>/ · 출력 artifacts/team01/day06/<run_name>/)
 import argparse
 import json
 import sys
@@ -63,11 +65,14 @@ def split_xy(df: pd.DataFrame, label_column: str = "train_label"):
     return X, y, feature_columns
 
 
-def check_train(df: pd.DataFrame, labels: list, steps: int) -> list:
+FEATURE_DIMS = {"base38": 38, "team48": 48}
+
+
+def check_train(df: pd.DataFrame, labels: list, steps: int, dim: int = 38) -> list:
     errors = []
     feature_columns = [c for c in df.columns if c not in META_COLUMNS]
-    if len(feature_columns) != steps * 38:
-        errors.append(f"Feature 수 {len(feature_columns)} ≠ {steps} × 38")
+    if len(feature_columns) != steps * dim:
+        errors.append(f"Feature 수 {len(feature_columns)} ≠ {steps} × {dim}")
     missing = sorted(set(labels) - set(df["train_label"].astype(str)))
     if missing:
         errors.append(f"Train에 없는 라벨 {missing}")
@@ -92,14 +97,21 @@ def main(argv=None) -> int:
         config = json.load(f)
     steps = int(config["sequence_steps"])
     labels = list(config["labels"])
+    feature_set = config.get("feature_set", "base38")
+    dim = FEATURE_DIMS[feature_set]
+    run = config.get("run_name", "")
 
     train_path = Path(args.train_csv)
+    art_dir = Path(args.artifact_dir)
+    if run:  # 실험은 하위 폴더 (기본 38-D 결과는 그대로)
+        train_path = train_path.parent / run / train_path.name
+        art_dir = art_dir / run
     if not train_path.exists():
         print(f"[ERROR] 없음: {train_path} (day06_team_build_sequences.py 먼저 실행)")
         return 1
     train = pd.read_csv(train_path, encoding="utf-8-sig")
 
-    errors = check_train(train, labels, steps)
+    errors = check_train(train, labels, steps, dim)
     if errors:
         print("[ERROR] Train 검사 실패")
         for e in errors:
@@ -113,13 +125,14 @@ def main(argv=None) -> int:
     print(
         f"Train: {'·'.join(sorted(train['subject'].unique()))} / {len(train)} clips / {len(labels)} classes"
     )
-    print(f"X_train: {X_train.shape}  (정답 train_label은 X에 없음)")
+    print(
+        f"X_train: {X_train.shape}  ({dim}-D {feature_set} · 정답 train_label은 X에 없음)"
+    )
     print("클래스별 clip 수: " + " ".join(f"{k}={v}" for k, v in counts.items()))
 
     model = make_model(config)
     model.fit(X_train, y_train)
 
-    art_dir = Path(args.artifact_dir)
     art_dir.mkdir(parents=True, exist_ok=True)
     model_path = art_dir / "rf_team_baseline.joblib"
     joblib.dump(model, model_path)
@@ -132,6 +145,8 @@ def main(argv=None) -> int:
         else str(train_path),
         "train_subjects": sorted(train["subject"].unique().tolist()),
         "train_clips": len(train),
+        "run_name": run or "baseline",
+        "feature_set": feature_set,
         "feature_count": len(feature_columns),
         "sequence_steps": steps,
         "classes": [str(c) for c in model.classes_],

@@ -17,24 +17,33 @@ from __future__ import annotations
 #       data/team_projects/team01/main/day06/sequences/{split}_skipped.csv     (유효 Frame 부족 clip, 있을 때만)
 #       reports/team_projects/team01/main/day06/sequence_summary.csv           (split별 clip 수 · 라벨 수)
 #
+# 실험 (설정 파일만 바꿔서 같은 흐름 재사용)
+#   feature_set = "base38" (기본) | "team48" (38-D + 1조 신호 Feature G-01~G-10, src/team_feature_utils.py)
+#   run_name 이 있으면 출력이 하위 폴더로 감: sequences/<run_name>/ · reports/.../day06/<run_name>/
+#
 # 실행
-#   uv run python scripts/day06_team_build_sequences.py
+#   uv run python scripts/day06_team_build_sequences.py                                             # 38-D 기본
+#   uv run python scripts/day06_team_build_sequences.py --config configs/team01_day06_e01_48d.json  # E-01 48-D
 import argparse
 import json
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.pose_utils import COCO_KEYPOINT_NAMES
 from src.sequence_utils import (
+    FRAME_FEATURE_NAMES,
     build_frame_feature_matrix,
     flatten_sequence,
+    frame_feature_from_row,
     resample_sequence,
-    sequence_feature_names,
 )
+from src.team_feature_utils import SIGNAL_FEATURE_NAMES, signal_features
 
 MAIN_DIR = ROOT / "reports" / "team_projects" / "team01" / "main"
 SPLITS = ("train", "val", "test")
@@ -77,6 +86,58 @@ def parse_args(argv=None):
 def load_json(path) -> dict:
     with open(path, encoding="utf-8") as f:
         return json.load(f)
+
+
+FEATURE_SETS = {
+    "base38": FRAME_FEATURE_NAMES,
+    "team48": FRAME_FEATURE_NAMES + SIGNAL_FEATURE_NAMES,
+}
+
+
+def frame_names(feature_set: str) -> list:
+    if feature_set not in FEATURE_SETS:
+        raise ValueError(f"feature_set은 {list(FEATURE_SETS)} 중 하나: {feature_set}")
+    return list(FEATURE_SETS[feature_set])
+
+
+def feature_names(steps: int, feature_set: str = "base38") -> list:
+    return [
+        f"t{t:02d}_{name}" for t in range(steps) for name in frame_names(feature_set)
+    ]
+
+
+def run_paths(args, config: dict):
+    """run_name이 있으면 하위 폴더 (기본 38-D 결과 경로는 그대로)."""
+    run = config.get("run_name", "")
+    out_dir = Path(args.output_dir) / run if run else Path(args.output_dir)
+    summary = Path(args.summary)
+    if run:
+        summary = summary.parent / run / summary.name
+    return out_dir, summary
+
+
+def team48_frame_matrix(keypoints: pd.DataFrame):
+    """38-D(수업 함수 그대로) 뒤에 G-01~G-10을 붙인 48-D. 48개 중 하나라도 계산 못 하면 그 Frame은 제외."""
+    features, frame_ids = [], []
+    for _, row in keypoints.sort_values("frame_id").iterrows():
+        base = frame_feature_from_row(row)
+        if base is None:
+            continue
+        points = np.asarray(base[:34], dtype=float).reshape(17, 2)
+        conf_cols = [f"{n}_conf" for n in COCO_KEYPOINT_NAMES]
+        conf = (
+            row[conf_cols].to_numpy(dtype=float)
+            if all(c in row.index for c in conf_cols)
+            else None
+        )
+        g = signal_features(points, conf)
+        if not np.all(np.isfinite(g)):
+            continue
+        features.append(np.concatenate([np.asarray(base, dtype=float), g]))
+        frame_ids.append(int(row["frame_id"]))
+    if not features:
+        return np.empty((0, 48)), np.asarray([], dtype=np.int32)
+    return np.stack(features), np.asarray(frame_ids, dtype=np.int32)
 
 
 # --------------------------------------------------
@@ -128,9 +189,17 @@ def check_inputs(
 # clip → 1행 (수업 34번 역할)
 # --------------------------------------------------
 def build_clip_row(
-    item: dict, keypoints: pd.DataFrame, steps: int, min_valid: int, label_column: str
+    item: dict,
+    keypoints: pd.DataFrame,
+    steps: int,
+    min_valid: int,
+    label_column: str,
+    feature_set: str = "base38",
 ):
-    features, frame_ids = build_frame_feature_matrix(keypoints)
+    if feature_set == "team48":
+        features, frame_ids = team48_frame_matrix(keypoints)
+    else:
+        features, frame_ids = build_frame_feature_matrix(keypoints)
     valid = len(frame_ids)
     if valid < min_valid:
         return None, valid
@@ -145,17 +214,24 @@ def build_clip_row(
         "first_valid_frame": int(frame_ids[0]),
         "last_valid_frame": int(frame_ids[-1]),
     }
-    row.update(dict(zip(sequence_feature_names(steps), flatten_sequence(sequence))))
+    row.update(dict(zip(feature_names(steps, feature_set), flatten_sequence(sequence))))
     return row, valid
 
 
 def build_split(
-    df: pd.DataFrame, root: Path, steps: int, min_valid: int, label_column: str
+    df: pd.DataFrame,
+    root: Path,
+    steps: int,
+    min_valid: int,
+    label_column: str,
+    feature_set: str = "base38",
 ):
     rows, skipped = [], []
     for item in df.to_dict("records"):
         keypoints = pd.read_csv(root / item["keypoint_csv"], encoding="utf-8-sig")
-        row, valid = build_clip_row(item, keypoints, steps, min_valid, label_column)
+        row, valid = build_clip_row(
+            item, keypoints, steps, min_valid, label_column, feature_set
+        )
         if row is None:
             skipped.append(
                 {
@@ -167,11 +243,13 @@ def build_split(
             )
         else:
             rows.append(row)
-    columns = META_COLUMNS + sequence_feature_names(steps)
+    columns = META_COLUMNS + feature_names(steps, feature_set)
     return pd.DataFrame(rows, columns=columns), pd.DataFrame(skipped)
 
 
-def make_summary(built: dict, skipped: dict, labels: list, steps: int) -> pd.DataFrame:
+def make_summary(
+    built: dict, skipped: dict, labels: list, steps: int, dim: int = 38
+) -> pd.DataFrame:
     rows = []
     for name in SPLITS:
         df = built[name]
@@ -181,7 +259,7 @@ def make_summary(built: dict, skipped: dict, labels: list, steps: int) -> pd.Dat
             "subjects": "|".join(sorted(df["subject"].unique())),
             "clips": len(df),
             "skipped": len(skipped[name]),
-            "features": steps * 38,
+            "features": steps * dim,
         }
         row.update({label: int(counts.get(label, 0)) for label in labels})
         rows.append(row)
@@ -196,6 +274,8 @@ def main(argv=None) -> int:
     min_valid = int(config["min_valid_frames"])
     label_column = config["label_column"]
     labels = list(config["labels"])
+    feature_set = config.get("feature_set", "base38")
+    dim = len(frame_names(feature_set))
     root = Path(args.root)
 
     splits = {}
@@ -219,12 +299,12 @@ def main(argv=None) -> int:
     print("입력 검사: OK (subject · 라벨 16개 · clip 겹침 없음 · Keypoint CSV 있음)")
     print()
 
-    out_dir = Path(args.output_dir)
+    out_dir, summary_path = run_paths(args, config)
     out_dir.mkdir(parents=True, exist_ok=True)
     built, skipped = {}, {}
     for name in SPLITS:
         built[name], skipped[name] = build_split(
-            splits[name], root, steps, min_valid, label_column
+            splits[name], root, steps, min_valid, label_column, feature_set
         )
         built[name].to_csv(out_dir / f"{name}.csv", index=False, encoding="utf-8-sig")
         skip_path = out_dir / f"{name}_skipped.csv"
@@ -236,12 +316,13 @@ def main(argv=None) -> int:
             f"{name:5s}: {len(built[name])} rows · skipped {len(skipped[name])} · columns {built[name].shape[1]}"
         )
 
-    summary = make_summary(built, skipped, labels, steps)
-    summary_path = Path(args.summary)
+    summary = make_summary(built, skipped, labels, steps, dim)
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(summary_path, index=False, encoding="utf-8-sig")
     print()
-    print(f"Frame Feature: 38-D · Step {steps} · clip 1개 = {steps * 38} Feature")
+    print(
+        f"Frame Feature: {dim}-D ({feature_set}) · Step {steps} · clip 1개 = {steps * dim} Feature"
+    )
     print(f"Saved: {out_dir}")
     print(f"Saved: {summary_path}")
     print("1조 Day06 Sequence Dataset: READY")

@@ -164,3 +164,65 @@ def test_main_end_to_end(tmp_path):
     assert list(train.columns[:8]) == seq6.META_COLUMNS
     s = pd.read_csv(summary)
     assert list(s["clips"]) == [2, 2, 2] and list(s["N00"]) == [1, 1, 1]
+
+
+def test_team48_adds_signal_features():
+    item = {
+        "clip_id": "c1",
+        "subject": "S01",
+        "action_id": "A01",
+        "train_label": "A01",
+        "take": "T01",
+    }
+    kp = _keypoints(40)
+    row, valid = seq6.build_clip_row(
+        item,
+        kp,
+        steps=30,
+        min_valid=10,
+        label_column="train_label",
+        feature_set="team48",
+    )
+    base, _ = seq6.build_clip_row(
+        item, kp, steps=30, min_valid=10, label_column="train_label"
+    )
+    features = [k for k in row if k not in seq6.META_COLUMNS]
+    assert len(features) == 30 * 48 and valid == 40
+    assert features[38] == "t00_wrist_distance" and features[48] == "t01_nose_x"
+    # 38-D 부분은 기본과 같은 값
+    assert np.allclose(
+        [row[k] for k in base if k.startswith("t00_")],
+        [base[k] for k in base if k.startswith("t00_")],
+    )
+
+
+def test_run_name_goes_to_subfolder(tmp_path):
+    _setup(tmp_path)
+    cfg = tmp_path / "cfg48.json"
+    cfg.write_text(
+        '{"run_name": "e01_48d", "feature_set": "team48", "sequence_steps": 30, "min_valid_frames": 10, '
+        '"label_column": "train_label", "labels": ["A01", "N00"]}'
+    )
+    split_cfg = tmp_path / "split.json"
+    split_cfg.write_text(
+        '{"train_subjects": ["S01"], "val_subjects": ["S05"], "test_subjects": ["S02"]}'
+    )
+    out, summary = tmp_path / "out", tmp_path / "rep" / "summary.csv"
+    args = [
+        "--config",
+        str(cfg),
+        "--split-config",
+        str(split_cfg),
+        "--split-dir",
+        str(tmp_path / "splits"),
+        "--output-dir",
+        str(out),
+        "--summary",
+        str(summary),
+        "--root",
+        str(tmp_path),
+    ]
+    assert seq6.main(args) == 0
+    assert pd.read_csv(out / "e01_48d" / "val.csv").shape == (2, 8 + 1440)
+    assert (tmp_path / "rep" / "e01_48d" / "summary.csv").exists()
+    assert not (out / "val.csv").exists()
