@@ -1,0 +1,20 @@
+﻿date,course_day,time,owner,category,task,result,outputs,commit,pr,status
+2026-11-18,Day 05,10:23,S03,수업,5일차 Keypoint Dataset · QA · Subject Split 실습 25~32,미니 챌린지 전,scripts/25~32 · configs/day05_subject_split.json,b973330,,완료
+2026-11-18,Day 05,오전,전원,결정,교수님 진행 순서 확인 — 촬영 끝 → 분할 · QA · 보완 → 학습 → FastAPI에 영상 1~2개 업로드 테스트,,,,,완료
+2026-11-18,Day 05,15:00경,S04,촬영,본 촬영 3차 — S04 90개 (폰 원본 4K HEVC → 1080×1920 30 FPS 변환),PASS 90 · conf 평균 0.971 → 누적 271,main_shoot_1118_s04_report.md,bfcc6fb,#11,완료
+2026-11-18,Day 05,17:06,S02,문서,README 수정,,README.md,e2d6189,#12,완료
+2026-11-18,Day 05,17:11,S04,문서,RGB 촬영 설정 기록 (이미지 → 영상 설정으로 교체),FHD 30 FPS 등 촬영 설정,docs/rgb_video_capture_log.md,bf1dd5d · d6a5830 · 218b8e2,#13 · #14,완료
+2026-11-18,Day 05,오후,S02 · S03,촬영,본 촬영 4차 — S02 90 · S03 80,PASS 170 · S03 A12 · A13 10개 빠짐 발견 · 원본 HDR(HLG),main_shoot_1118_s02_s03_report.md,4d02f6c,#15,완료
+2026-11-18,Day 05,16:40,S03,촬영,S03 보충 — A12 후킹 5 · A13 백코트 5,10개 PASS (conf 0.973) → 누적 451 · 본 촬영 끝,main_shoot_1118_s02_s03_report.md 6장,713a06c,#16,완료
+2026-11-18,Day 05,18:53,S05,코드,5일차 흐름을 1조 본 촬영에 적용 (실습 27~32 기반),동작 18개별 자동 QA · Human QA 451개 · Approved · Subject-wise Split · Leakage OK,scripts/day05_team_*.py · src/team_dataset_utils.py · reports/team_projects/team01/main/dataset/,459e190,#16,완료
+2026-11-18,Day 05,18:53,S05,문서,데이터 준비 보고서 (4일차 ⑧ + 5일차 Summary + 4 · 5일차 점검표),,reports/team_projects/team01/team01_data_preparation_report.md,459e190,#16,완료
+2026-11-18,Day 05,19:00,전원,결정,Validation = S05 확정 (학습 S01 · S03 · S04 / 테스트 S02) · T01_S01_A10_T04 재촬영 대신 PASS,Approved 450 · Train 270 / Val 90 / Test 90,docs/referee/04 v2.3 · configs/team01_subject_split.json,69ff176,#17,완료
+2026-11-18,Day 05,19:00,S05,문서,daily_csv 작업 기록 시작 (11-13 ~ 11-18),,daily_csv/,88b9ae9,#17,완료
+2026-11-18,Day 05,저녁,S05,코드,구간 라벨 labels.csv 자동 초안 + V-01~V-10 검증 + 확인용 모아보기,"378 clip · 2,169구간 · PASS 376 · REVIEW 2 · 영상 21개로 경계 대조 (차이 약 0.1~0.3초)",scripts/day05_team_make_labels.py · day05_team_validate_labels.py · day05_team_label_sheet.py · main/labels/team01_labels.csv,4726729,#18,완료
+2026-11-18,Day 05,저녁,S05,코드,팀 Feature G-01~G-10 (48-D) + 라벨별 평균 확인표,"G-02 · G-01 · G-06 · G-10은 설계대로, G-04 · G-08 · G-09는 기대와 다름 (A15 ↔ 팔짱은 G-01로 갈림)",src/team_feature_utils.py · scripts/day05_team_signal_feature_check.py · main/features/,2859008,#18,완료
+2026-11-18,Day 05,저녁,S05,코드,Sequence → 5일차 수업 Keypoint CSV 형식 내보내기 · manifest에 수업 열 추가,378개 (x_norm = x_px ÷ 영상 너비),scripts/day05_team_export_keypoints.py,2859008,#18,완료
+2026-11-18,Day 05,저녁,S05,문서,촬영 로그 webcam_log.csv 자동 채움 · 02 v2.3 · 03 v2.3 · 05 v2.1 (세로 입력 · 업로드 API 계획),451행 — 카메라 높이 · 거리 · 진행자는 비움,scripts/day05_team_make_webcam_log.py · main/webcam_log.csv · docs/referee/02 · 03 · 05,2310deb,#18,완료
+2026-11-18,Day 05,저녁,S05,데이터 QA,Sequence CSV 451개 확정본 Git 추가 · 5일차 결과물 451개 기준으로 다시 실행 · 결정 기록 문서,Sequence 451 · Approved 450 · Split 270 / 90 / 90 · 테스트 145 passed,reports/team_projects/team01/main/sequences/ · docs/referee/team01_decision_log.md,33d9540 · 040a4c9,#18,완료
+2026-11-18,Day 05,19:50,S05,데이터 QA,"5일차 최종 점검 — main에서 개수 · 개인정보 · 숫자 · 테스트 다시 확인, 보고서 · README를 451개 기준으로 정리","이상 없음 (실명 · 영상 · 얼굴 이미지 0, 중복 폴더 0)",reports/team_projects/team01/team01_data_preparation_report.md · README.md,,,완료
+2026-11-18,Day 05,다음,전원,할 일,라벨 교차 검수 10% (모아보기) · webcam_log.csv 카메라 높이 · 거리 · 진행자 기입,02 문서 8장 5단계 · 03 문서 9.1,,,,대기
+2026-11-18,Day 05,다음,전원,할 일,6일차 — 30-step × 38 = 1140-D · RF 300 · Val Accuracy / Macro F1 / Confusion Matrix + E-01 38 ↔ 48-D · clip 전체 ↔ 신호 구간,Test S02는 마지막에 한 번,,,,대기

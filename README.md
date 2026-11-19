@@ -35,10 +35,12 @@ subject10_pose_action/
 ├── src/
 │   ├── common.py               # 설정 읽기 · GPU/CPU 선택      (1일차)
 │   ├── pose_utils.py           # COCO 17 이름 · Skeleton · 품질 판정 (2일차)
-│   └── feature_utils.py        # 관절각도 · 정규화 · 좌우 반전   (3일차)
-├── scripts/                    # 00~18 수업 순서대로 실행
+│   ├── feature_utils.py        # 관절각도 · 정규화 · 좌우 반전   (3일차)
+│   └── team_dataset_utils.py   # 1조 QA · Human QA · Split · Leakage (5일차)
+├── scripts/                    # 00~32 수업 순서대로 실행 + day0N_* 1조 확장
 ├── reports/                    # 일차별 결과 (CSV·이미지는 Git 제외)
-└── docs/referee/               # 1조 프로젝트 설계 문서
+├── docs/referee/               # 1조 프로젝트 설계 문서
+└── daily_csv/                  # 날짜별 작업 기록 (한 줄 = 작업 하나, S 번호만)
 ```
 
 ### `data/` 폴더 구조 (Git 제외 — 각자 PC에 직접 넣기)
@@ -335,6 +337,111 @@ python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01
 
 ---
 
+## Day 05 - Keypoint QA · Human QA · Subject-wise Split
+
+수업 실습 `scripts/25~32` (6동작 · 18 clip)를 그대로 두고, 같은 흐름을 1조 본 촬영 451개에 맞게 새로 만들었습니다.
+
+### Day 05 Pipeline (1조)
+
+```
+STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Human QA (PASS / RESHOOT / EXCLUDE)
+   ─▶ ③ Approved Manifest ─▶ ④ Subject-wise Split ─▶ ⑤ Leakage 검사   (+ Random Frame Split 비교)
+```
+
+| 실습 | 1조 스크립트 | 출력 (`reports/team_projects/team01/main/dataset/`) |
+| --- | --- | --- |
+| 27 | `day05_team_keypoint_qa.py` | `team01_clip_qa.csv` · `team01_clip_review.csv` (다시 돌려도 사람이 적은 결정 유지) |
+| 28 | `day05_team_validate_review.py` | 검사만 (UNREVIEWED · 잘못된 값 · note 없는 CHECK PASS · NO_SEQUENCE) |
+| 29 | `day05_team_approved_manifest.py` | `team01_approved_manifest.csv` (`train_label`: D01~D03 → N00) |
+| 30 | `day05_team_subject_split.py` | `splits/train.csv · val.csv · test.csv · split_counts.csv` |
+| 31 | `day05_team_check_leakage.py` | Subject · clip · 영상 파일 겹침 + 18동작 coverage |
+| 32 | `day05_team_frame_split_demo.py` | Frame 무작위 분할의 누수 확인 (학습 없음) |
+| — | `day05_team_make_labels.py` · `day05_team_validate_labels.py` | `main/labels/team01_labels.csv` 구간 라벨 자동 초안 (N00 → X → C01 → X → 신호 → X → N00) · V-01~V-10 검사 |
+| — | `day05_team_label_sheet.py` | 라벨 확인용 모아보기 (각자 PC, 얼굴이 보여 Git 제외) |
+| — | `day05_team_make_crosscheck.py` · `day05_team_label_crosscheck.py` | 라벨 교차 검수 10% — 표본 45개 · 1인 9개(자기 영상 제외) 배정 → 검수자 경계 ↔ 자동 라벨 비교(기준 0.2초) → `--apply`로 반영. 모아보기는 `--blind`(라벨 숨김) |
+| — | `day05_team_export_keypoints.py` | Sequence → 5일차 수업 Keypoint CSV 형식 (`data/team_projects/team01/main/keypoints/`, Git 제외) |
+| — | `day05_team_signal_feature_check.py` | 팀 Feature G-01~G-10 라벨별 평균표 `main/features/signal_feature_by_label.csv` |
+| — | `day05_team_make_webcam_log.py` | 촬영 로그 `main/webcam_log.csv` (03 문서 9.1, 카메라 높이 · 거리 · 진행자는 사람이 기입) |
+
+- 공통 함수 `src/team_dataset_utils.py` · `src/team_label_utils.py` · `src/team_feature_utils.py` (G-01~G-10, 48-D) · 테스트 `tests/test_team_*.py`
+- 분할 설정 `configs/team01_subject_split.json` — Train S01 · S03 · S04 / Validation S05 / Test S02
+- **Sequence CSV는 확정본** — `day04_build_team_sequences.py --overwrite`로 다시 만들지 않음 (다시 만들면 451개 전체가 바뀐 것으로 잡힘). 새 촬영분만 추가
+- 결과 요약 · 4 · 5일차 점검표: `reports/team_projects/team01/team01_data_preparation_report.md`
+
+### 주요 결과 (2026-11-18, 451개 확정)
+
+- Sequence CSV 451개 확정본 Git 관리 (`reports/team_projects/team01/main/sequences/`, 72,703 Frame · clip 평균 5.4초 · YOLO conf 0.968)
+- 자동 QA: AUTO_PASS 449 · CHECK 2 (manifest REVIEW) → Human QA: PASS 450 · EXCLUDE 1 (`T01_S05_A03_T01`, T06으로 대체)
+- Approved 450 (신호 15개 × 25 · N00 75) → Split Train 270 (S01 · S03 · S04) · Val 90 (S05) · Test 90 (S02) · Leakage check: OK
+- Frame 무작위 분할은 5명 · 450 clip 전부 겹침 → 사람 단위 분할이 필요한 근거
+- 구간 라벨 451 clip 자동 초안 (PASS 448 · REVIEW 2) · 팀 Feature G-01~G-10 확인표 · 5일차 Keypoint CSV 형식 내보내기
+
+---
+
+## Day 06 - Action Recognition Baseline 성능평가
+
+수업 실습 `scripts/33~40` — 5일차 Approved 18 clip으로 첫 Action Recognition 모델(Random Forest)을 학습하고 평가했습니다.
+
+### Input
+
+- 5일차 Approved Keypoint Dataset 18 clip (3 Subjects × 6 Actions × 1 Take)
+- S01 → Train · S02 → Validation · S03 → Test
+- Action: bend_return · leg_raise_lower · walk_turn_walk · drink_return · sit_stand · wave
+
+### Day 06 Pipeline
+
+```
+Keypoint CSV ─▶ 38-D Frame Feature ─▶ Sequence Resampling (frame_id 기준 30 Step) ─▶ 1,140-D (Clip 1개 = 1행)
+   ─▶ Random Forest (S01 Train) ─▶ S02 Validation ─▶ 오분류 추적 ─▶ Feature 비교 ─▶ Mini Challenge ─▶ S03 Test (마지막 1번)
+```
+
+### 주요 실행 파일
+
+| 파일 | 내용 | 출력 |
+| --- | --- | --- |
+| `configs/day06_baseline.json` | 30 Step · 최소 유효 Frame 10 · Tree 300 · max_depth null · seed 42 | — |
+| `src/sequence_utils.py` | Frame → 38-D, frame_id 기준 Resampling, 펼치기, 열 이름 | — |
+| `scripts/33_check_day06_inputs.py` | 5일차 Split · Keypoint CSV · Leakage 검사 | `reports/day06/tables/day06_input_check.csv` |
+| `scripts/34_build_sequence_dataset.py` | 18 clip → Sequence Dataset (1,148열 = 메타 8 + 1,140) | `data/day06/sequences/{train,val,test}.csv` |
+| `scripts/35_train_rf_baseline.py` | S01 6행으로 Random Forest 학습 | `artifacts/day06/rf_action_baseline.joblib` · `rf_feature_columns.json` · `rf_training_info.json` |
+| `scripts/36_evaluate_validation.py` | S02 Accuracy · Macro F1 · Confusion Matrix | `reports/day06/metrics/validation_*` |
+| `scripts/37_analyze_misclassified.py` | 오분류 clip에 원본 MP4 · Keypoint 경로 연결 | `reports/day06/misclassified/` |
+| `scripts/38_compare_static_vs_sequence.py` | 가운데 Frame 1개(38) vs 30 Step(1,140) | `reports/day06/experiments/static_vs_sequence.csv` |
+| `scripts/39_compare_feature_sets.py` | 좌표+각도(1,140) vs 좌표만(1,020) | `reports/day06/experiments/feature_set_comparison.csv` |
+| `scripts/40_evaluate_test.py` | 최종 조건으로 S03 Test 1번 | `reports/day06/metrics/test_*` |
+
+### 주요 결과 (내 실행, 2026-11-19)
+
+| 실험 | Feature | Accuracy | Macro F1 |
+| --- | --- | --- | --- |
+| Baseline Validation (S02) | 1,140 | 0.5000 | 0.4444 |
+| Static (가운데 Frame) | 38 | 0.6667 | 0.5556 |
+| Coordinates Only | 1,020 | 1.0000 | 1.0000 |
+| Mini Challenge 15 Step | 570 | 0.6667 | 0.5833 |
+| **Final Test (S03)** | 1,140 | **1.0000** | **1.0000** |
+
+- Baseline 오분류: walk_turn_walk → leg_raise_lower · drink_return → wave · wave → drink_return
+- 교재 결과(0.6667 / 0.5556)와 다른 이유: 5일차 Keypoint 추출 값 차이. Validation 6개라 clip 1개 = 0.1667
+- 최종 조건은 원래 Baseline(30 Step · 좌표+각도) 유지. Test 결과를 보고 조건을 다시 바꾸지 않음
+- Confidence 0.20~0.37 — 아주 작은 교육용 Dataset이라 이 숫자를 현업 성능으로 해석하지 않음
+- 정리: [`reports/day06/day06_summary.md`](reports/day06/day06_summary.md)
+
+### Mini Challenge
+
+`sequence_steps` 하나만 30 → 15로 바꿔 S02 Validation 비교 → 0.5000 / 0.4444 → 0.6667 / 0.5833 (wave 정답으로 바뀜, 맞다가 틀린 clip 없음).
+clip 1개 차이라 일반화하지 않고, 실험 후 30 Step으로 되돌림.
+자세한 내용: [`reports/day06/challenge/mini_challenge_result.md`](reports/day06/challenge/mini_challenge_result.md)
+
+### Git 제외
+
+`data/day06/` · `*.joblib` · `reports/day06/` 자동 생성 csv · Confusion Matrix png (`artifacts/`는 json 2개만 `git add -f`)
+
+### 다음 수업
+
+7일차에는 실시간 Frame을 계속 모아 Sliding Window를 만들고 실시간 Action Recognition으로 연결합니다.
+
+---
+
 ## 1조 프로젝트 — 농구 심판 수신호 인식 → 전광판
 
 수업 Pipeline을 농구 심판의 파울 수신호 15개 인식에 적용하는 조 프로젝트입니다.
@@ -354,5 +461,9 @@ python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01
 | `configs/team01_main_manifest.csv` · `reports/team_projects/team01/main_shoot_1117_report.md` | 본 촬영 manifest (세로 1080×1920, `capture_set = main_1117`) · 1차 촬영 결과 (S01·S05 73개, PASS 72 · REVIEW 1) |
 | `reports/team_projects/team01/main_shoot_1117_2_report.md` | 본 촬영 2차 결과 (S01·S05 T03~T05 108개 → S01·S05 완료, 누적 181개, PASS 179 · REVIEW 2) |
 | `reports/team_projects/team01/main_shoot_1118_s04_report.md` | 본 촬영 3차 결과 (S04 90개, 원본 전송 · 4K → 1080×1920 30 FPS 변환, 누적 271개) |
+| `reports/team_projects/team01/main_shoot_1118_s02_s03_report.md` | 본 촬영 4차 결과 (S02 90 · S03 80개 + 6장 S03 A12 · A13 보충 10개 → 누적 451개, 본 촬영 끝) |
+| `reports/team_projects/team01/team01_data_preparation_report.md` | 4일차 ⑧ 결과 보고서 + 5일차 Summary (QA · Human QA · Split · 4 · 5일차 점검표) |
+| `daily_csv/` | 날짜별 작업 기록 CSV (11-13~) + `index.csv` 요약. 쓰는 법은 `daily_csv/README.md` |
+| `docs/referee/team01_decision_log.md` | 1조 결정 기록 한 장 (회의 · 촬영 · QA · Split · 라벨 결정 A1~C10) |
 | `scripts/day04_pose_conf_report.py` | STEP 4 Sequence CSV → YOLO 관절별 conf 표 (관절 · clip · 사람×동작 CSV + Markdown 요약), STEP 2~5 다음에 실행 |
 | `configs/team01_action_classes.csv` | 신호 A01~A15 · C01 · N00 + 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 (학습 때 N00) |

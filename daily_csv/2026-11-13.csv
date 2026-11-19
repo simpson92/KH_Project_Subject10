@@ -1,0 +1,11 @@
+﻿date,course_day,time,owner,category,task,result,outputs,commit,pr,status
+2026-11-13,Day 01·02,10:43,S03,Git,레포 시작 — Day 01 · 02 실습 코드와 결과 첫 커밋,"Pose 이미지 · 영상 입력, Keypoint 품질 확인",scripts/00~09 · src/common.py · src/pose_utils.py · reports/day01,a9ababa,,완료
+2026-11-13,Day 01·02,10:59,S03,Git,.gitignore 추가 · Day 02 영상 품질 스크립트,data/ · 영상 · 가중치 Git 제외,.gitignore · scripts/10_pose_video_quality.py,72a8948,,완료
+2026-11-13,Day 01·02,16:46,S03,코드,1조 스모크 테스트 Pipeline (U파울 vs 푸싱),간이 검증용 — 본 Pipeline 아님,scripts/referee_00~03 · reports/referee/smoke/,11ece62,,완료
+2026-11-13,Day 01·02,17:19,S03,코드,스모크 Pose overlay 영상 렌더러,,scripts/referee_04_render_pose.py,271c62b,,완료
+2026-11-13,Day 01·02,18:21,S03,문서,스모크 테스트 README,,reports/referee/smoke/README.md,b7510e8,,완료
+2026-11-13,Day 01·02,18:26,S03,문서,1조 설계 문서 DOC-01~04 추가,관절 매핑 · 라벨링 · 웹캠 촬영 · 특징/모델,docs/referee/01~04,e34ea2a,,완료
+2026-11-13,Day 01·02,18:32,S03,결정,D1 Pose 모델 = YOLO만 (손 관절은 보류),,docs/referee/01 · 04,dea0f28,,완료
+2026-11-13,Day 01·02,19:03,S03,코드,VICON take_log 생성 · Take 매핑 규칙,,scripts/vicon_00_make_take_log.py,fa84c60,,완료
+2026-11-13,Day 01·02,19:33,S03,코드,VICON GLB → 3D JSON 추출 + 몸통 좌표계 검증 (D4),,scripts/vicon_01_extract_3d_json.py · reports/vicon/extract_3d_report.csv,eadfc02,,완료
+2026-11-13,Day 01·02,19:39,S03,결정,D6 대표 인물 = 가장 큰 BBox,여러 사람이 잡힐 때 주인공 선택 규칙,docs/referee/01,2aab0aa,,완료

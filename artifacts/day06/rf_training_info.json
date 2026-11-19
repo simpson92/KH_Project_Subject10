@@ -1,0 +1,20 @@
+{
+  "train_clips": 6,
+  "subjects": [
+    "S01"
+  ],
+  "classes": [
+    "bend_return",
+    "drink_return",
+    "leg_raise_lower",
+    "sit_stand",
+    "walk_turn_walk",
+    "wave"
+  ],
+  "feature_count": 1140,
+  "sequence_steps": 30,
+  "min_valid_frames": 10,
+  "n_estimators": 300,
+  "max_depth": null,
+  "random_state": 42
+}

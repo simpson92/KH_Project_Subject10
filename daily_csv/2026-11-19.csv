@@ -1,0 +1,5 @@
+﻿date,course_day,time,owner,category,task,result,outputs,commit,pr,status
+2026-11-19,Day 06,08:50,S05,데이터 QA,구간 라벨 교차 검수 준비 — 표본 45개(10%) · 1인 9개 배정(자기 영상 제외) · blind 모아보기 · 비교/반영 스크립트 · 팀원 안내서 PDF,REVIEW 2 · 검증 경고 3 · 신호 15×2 · 일상 3 · 혼동 동작 7,scripts/day05_team_make_crosscheck.py · day05_team_label_crosscheck.py · main/labels/crosscheck/,,,완료
+2026-11-19,Day 06,08:50,S05,코드,webcam_log.csv 빈 칸 채우기 옵션 (--cam-height · --cam-distance · --operator-map · --value-note),이미 적힌 칸은 지킴 (--force면 덮어씀),scripts/day05_team_make_webcam_log.py,,,완료
+2026-11-19,Day 06,다음,전원,할 일,라벨 교차 검수 9개씩 (안내서 PDF) → PM 비교 · 반영,7일차 실시간 수업 전,main/labels/crosscheck/crosscheck_S0X.csv,,,대기
+2026-11-19,Day 06,다음,전원,할 일,6일차 수업 33~40 실습 → 1조용 day06_team_* (38-D 기본 학습 · Val S05 · E-01 · Test S02 마지막),,,,,대기

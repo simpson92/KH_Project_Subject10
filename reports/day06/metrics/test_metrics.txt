@@ -1,0 +1,15 @@
+Test Accuracy: 1.000000
+Test Macro F1: 1.000000
+
+                 precision    recall  f1-score   support
+
+    bend_return       1.00      1.00      1.00         1
+   drink_return       1.00      1.00      1.00         1
+leg_raise_lower       1.00      1.00      1.00         1
+      sit_stand       1.00      1.00      1.00         1
+ walk_turn_walk       1.00      1.00      1.00         1
+           wave       1.00      1.00      1.00         1
+
+       accuracy                           1.00         6
+      macro avg       1.00      1.00      1.00         6
+   weighted avg       1.00      1.00      1.00         6
