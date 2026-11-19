@@ -259,7 +259,7 @@ scripts/
 └── 18_video_frame_features.py
 ```
 
-> `18_video_frame_features.py`: 교재 26절의 18번 코드 칸에 17번 코드가 그대로 들어 있어,
+> `18_video_frame_features.py`: 교재 26절의 18번 코드 칸에 17번 코드가 그대로 들어 있습니다,
 > 교재 설명(Frame마다 38-D, `frame_id · time_sec · valid_pose · mean_keypoint_conf · low_keypoint_count`)대로 다시 작성했습니다.
 > 교재 데모 영상에서 `Total frames 60 / Valid pose frames 60 / Feature count 38`, Frame 1 왼팔꿈치 약 140°로 교재 결과와 일치합니다.
 
