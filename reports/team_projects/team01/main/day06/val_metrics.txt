@@ -1,18 +1,18 @@
-1조 RF Baseline — Validation (S05, 90 clips)
+1조 RF baseline — Validation (S05, 90 clips)
 Model: rf_team_baseline.joblib · Feature 1140
-Accuracy: 0.9000
-Macro F1: 0.8981
-Correct: 81 / 90
-Misclassified: 9 (설계 때 예상한 혼동 쌍 3개)
+Accuracy: 0.9333
+Macro F1: 0.9450
+Correct: 84 / 90
+Misclassified: 6 (설계 때 예상한 혼동 쌍 3개)
 
               precision    recall  f1-score   support
 
          A01     1.0000    1.0000    1.0000         5
          A02     1.0000    1.0000    1.0000         5
          A03     1.0000    1.0000    1.0000         5
-         A04     1.0000    0.2000    0.3333         5
+         A04     1.0000    0.8000    0.8889         5
          A05     0.8333    1.0000    0.9091         5
-         A06     0.5556    1.0000    0.7143         5
+         A06     0.8333    1.0000    0.9091         5
          A07     1.0000    0.8000    0.8889         5
          A08     1.0000    1.0000    1.0000         5
          A09     1.0000    1.0000    1.0000         5
@@ -24,6 +24,6 @@ Misclassified: 9 (설계 때 예상한 혼동 쌍 3개)
          A15     1.0000    1.0000    1.0000         5
          N00     1.0000    0.7333    0.8462        15
 
-    accuracy                         0.9000        90
-   macro avg     0.9280    0.9208    0.8981        90
-weighted avg     0.9360    0.9000    0.8924        90
+    accuracy                         0.9333        90
+   macro avg     0.9453    0.9583    0.9450        90
+weighted avg     0.9514    0.9333    0.9340        90
