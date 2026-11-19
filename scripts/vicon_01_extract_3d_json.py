@@ -14,7 +14,7 @@ docs/referee/01_관절_매핑_명세.md
 
 실행:
     uv run python scripts/vicon_01_extract_3d_json.py
-    uv run python scripts/vicon_01_extract_3d_json.py --clip T01_S00_A02_T03_vicon --overwrite
+    uv run python scripts/vicon_01_extract_3d_json.py --clip T01_S01_A02_T03_vicon --overwrite
 
 --clip로 일부만 실행하면 리포트에도 그 Take만 기록됨 (전체 리포트는 옵션 없이 다시 실행)
 """

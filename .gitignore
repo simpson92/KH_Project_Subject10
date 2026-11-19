@@ -29,6 +29,7 @@ data/
 *.pth
 *.onnx
 *.engine
+*.task
 
 # Training outputs
 runs/
@@ -45,3 +46,29 @@ reports/day02/tables/*.csv
 
 reports/referee/smoke/keypoints/
 reports/day03/tables/*.csv
+
+# Generated Day04 results
+reports/day04/keyframes/*.jpg
+reports/day04/sequences/*.csv
+reports/day04/tables/*.csv
+reports/day04/challenge/keyframes/*.jpg
+reports/day04/challenge/sequences/*.csv
+reports/day04/challenge/challenge_sequence_summary.csv
+
+# Generated team01 extension results
+reports/team_projects/team01/tables/*.csv
+reports/team_projects/team01/sequences/*.csv
+
+# Generated team01 main shoot results (본 촬영, 스모크와 분리)
+reports/team_projects/team01/main/tables/*.csv
+reports/team_projects/team01/main/keyframes/
+reports/team_projects/team01/main/label_sheets/
+
+# Generated Day05 results
+reports/day05/tables/*.csv
+
+# Generated Day06 results
+reports/day06/tables/*.csv
+reports/day06/metrics/*.csv
+reports/day06/misclassified/*.csv
+reports/day06/experiments/*.csv

@@ -1,0 +1,7 @@
+{
+  "sequence_steps": 30,
+  "min_valid_frames": 10,
+  "random_state": 42,
+  "n_estimators": 300,
+  "max_depth": null
+}

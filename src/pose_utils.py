@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import numpy as np
+
 
 # ① COCO 17개 Keypoint의 이름 정의
 # YOLO Pose가 검출한 관절 번호(0~16)에 해당하는 이름
@@ -79,3 +81,50 @@ def confidence_state(
 
     # 0.30 미만이면 낮은 신뢰도
     return "LOW"
+
+
+# ⑤ 여러 사람이 검출된 화면에서 대표 인물 한 명 고르기
+# 1조 결정 D6 (docs/referee/01_관절_매핑_명세.md, 2026-11-13)
+#   "area"  : BBox 넓이가 가장 큰 사람 (D6 결정값, 심판이 카메라에 가장 가깝다는 전제)
+#   "conf"  : BBox Confidence가 가장 높은 사람 (수업 09번 코드 방식)
+#   "first" : YOLO 결과의 첫 번째 사람 (교재 12~18번 코드 방식, 교재 결과 재현용)
+MAIN_PERSON_MODES = ("area", "conf", "first")
+
+
+def _to_numpy(value) -> np.ndarray:
+    # torch Tensor(GPU 포함)와 NumPy 배열을 모두 받기 위한 변환
+    if hasattr(value, "cpu"):
+        value = value.cpu()
+    if hasattr(value, "numpy"):
+        return value.numpy()
+    return np.asarray(value)
+
+
+def select_main_person(result, mode: str = "area") -> int | None:
+    """YOLO Pose 결과(result)에서 대표 인물의 번호를 반환합니다.
+
+    사람이 없으면 None을 반환합니다.
+    반환한 번호로 result.keypoints.xy[번호], result.keypoints.conf[번호]를 꺼내 씁니다.
+    """
+    if mode not in MAIN_PERSON_MODES:
+        raise ValueError(f"mode는 {MAIN_PERSON_MODES} 중 하나여야 합니다: {mode}")
+
+    keypoints = getattr(result, "keypoints", None)
+    if keypoints is None or keypoints.xy is None or len(keypoints.xy) == 0:
+        return None
+
+    people = len(keypoints.xy)
+    if mode == "first" or people == 1:
+        return 0
+
+    boxes = getattr(result, "boxes", None)
+    if boxes is None or boxes.xyxy is None or len(boxes.xyxy) != people:
+        # BBox 정보가 Keypoint와 맞지 않으면 교재 방식(첫 번째 사람)으로 처리
+        return 0
+
+    if mode == "conf":
+        return int(np.argmax(_to_numpy(boxes.conf)))
+
+    xyxy = _to_numpy(boxes.xyxy)
+    areas = (xyxy[:, 2] - xyxy[:, 0]) * (xyxy[:, 3] - xyxy[:, 1])
+    return int(np.argmax(areas))
