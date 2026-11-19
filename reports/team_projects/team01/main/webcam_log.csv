@@ -377,9 +377,12 @@
 2026-11-17,T01_S05_A03_T06.mp4,S05,train,signal,A03,6,normal,0,right,1080x1920,30.0,,,OK,"A03만 6번째 Take (W4 5회 초과분, T01 REVIEW 보완)",,T01 대체 Take (A03만 6번째). 영상 확인 — 손끝 화면 안
 2026-11-17,T01_S05_A04_T01.mp4,S05,train,signal,A04,1,normal,0,right,1080x1920,30.0,,,OK,,,
 2026-11-17,T01_S05_A04_T02.mp4,S05,train,signal,A04,2,normal,0,right,1080x1920,30.0,,,OK,,,
-2026-11-17,T01_S05_A04_T03.mp4,S05,train,signal,A04,3,normal,0,right,1080x1920,30.0,,,OK,,,
-2026-11-17,T01_S05_A04_T04.mp4,S05,train,signal,A04,4,normal,0,right,1080x1920,30.0,,,OK,,,
-2026-11-17,T01_S05_A04_T05.mp4,S05,train,signal,A04,5,normal,0,right,1080x1920,30.0,,,OK,,,
+2026-11-17,T01_S05_A04_T03.mp4,S05,train,signal,A04,3,normal,0,right,1080x1920,30.0,,,RESHOOT,,,
+2026-11-17,T01_S05_A04_T04.mp4,S05,train,signal,A04,4,normal,0,right,1080x1920,30.0,,,RESHOOT,,,
+2026-11-17,T01_S05_A04_T05.mp4,S05,train,signal,A04,5,normal,0,right,1080x1920,30.0,,,RESHOOT,,,
+2026-11-19,T01_S05_A04_T06.mp4,S05,train,signal,A04,6,normal,0,right,1080x1920,30.0,,,OK,T03 대체 (왼손 위 → 오른손 위) · HDR on,,"재촬영 · 오른손 위 확인 (S05, 11-19) · HDR on"
+2026-11-19,T01_S05_A04_T07.mp4,S05,train,signal,A04,7,normal,0,right,1080x1920,30.0,,,OK,T04 대체 (왼손 위 → 오른손 위) · HDR on,,"재촬영 · 오른손 위 확인 (S05, 11-19) · HDR on"
+2026-11-19,T01_S05_A04_T08.mp4,S05,train,signal,A04,8,normal,0,right,1080x1920,30.0,,,OK,T05 대체 (왼손 위 → 오른손 위) · HDR on,,"재촬영 · 오른손 위 확인 (S05, 11-19) · HDR on"
 2026-11-17,T01_S05_A05_T01.mp4,S05,train,signal,A05,1,normal,0,right,1080x1920,30.0,,,OK,,,
 2026-11-17,T01_S05_A05_T02.mp4,S05,train,signal,A05,2,normal,0,right,1080x1920,30.0,,,OK,,,
 2026-11-17,T01_S05_A05_T03.mp4,S05,train,signal,A05,3,normal,0,right,1080x1920,30.0,,,OK,,,
