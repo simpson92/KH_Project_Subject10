@@ -1,0 +1,10 @@
+﻿clip_id,subject,action_id,true_label,pred_label,confidence,correct,known_confusable,video_path,keypoint_csv
+T01_S05_A04_T02,S05,A04,A04,A06,0.4033,0,0,data/team_projects/team01/main/rgb/videos/T01_S05_A04_T02.mp4,data/team_projects/team01/main/keypoints/S05/T01_S05_A04_T02.csv
+T01_S05_A04_T03,S05,A04,A04,A06,0.3667,0,0,data/team_projects/team01/main/rgb/videos/T01_S05_A04_T03.mp4,data/team_projects/team01/main/keypoints/S05/T01_S05_A04_T03.csv
+T01_S05_A04_T04,S05,A04,A04,A06,0.3733,0,0,data/team_projects/team01/main/rgb/videos/T01_S05_A04_T04.mp4,data/team_projects/team01/main/keypoints/S05/T01_S05_A04_T04.csv
+T01_S05_A04_T05,S05,A04,A04,A06,0.36,0,0,data/team_projects/team01/main/rgb/videos/T01_S05_A04_T05.mp4,data/team_projects/team01/main/keypoints/S05/T01_S05_A04_T05.csv
+T01_S05_A07_T04,S05,A07,A07,A05,0.3667,0,0,data/team_projects/team01/main/rgb/videos/T01_S05_A07_T04.mp4,data/team_projects/team01/main/keypoints/S05/T01_S05_A07_T04.csv
+T01_S05_D03_T01,S05,D03,N00,A11,0.48,0,1,data/team_projects/team01/main/rgb/videos/T01_S05_D03_T01.mp4,data/team_projects/team01/main/keypoints/S05/T01_S05_D03_T01.csv
+T01_S05_D03_T02,S05,D03,N00,A14,0.23,0,0,data/team_projects/team01/main/rgb/videos/T01_S05_D03_T02.mp4,data/team_projects/team01/main/keypoints/S05/T01_S05_D03_T02.csv
+T01_S05_D03_T04,S05,D03,N00,A11,0.67,0,1,data/team_projects/team01/main/rgb/videos/T01_S05_D03_T04.mp4,data/team_projects/team01/main/keypoints/S05/T01_S05_D03_T04.csv
+T01_S05_D03_T05,S05,D03,N00,A11,0.35,0,1,data/team_projects/team01/main/rgb/videos/T01_S05_D03_T05.mp4,data/team_projects/team01/main/keypoints/S05/T01_S05_D03_T05.csv
