@@ -1,0 +1,2 @@
+﻿target_action,expected_label,protocol,segments,final_correct,final_stable,prediction_updates,unknown_ratio,stable_match_ratio,top_stable,top_stable_share,top_wrong_stable,top_wrong_known_confusable,raw_match_ratio,top_raw,top_raw_share,raw_label_changes,stable_label_changes,mean_confidence,mean_processing_fps,window_seconds,confidence_threshold,stabilization_buffer,logs
+A01,A01,with_c01,2,1,UNKNOWN A01,229,0.8253,0.0786,A01,0.6,A13,0,0.1572,A13,0.5284,35,7,0.3617,28.78,5.0,0.45,5,ip_webcam_w5_c0.45_s5_with_c01_20261120_164101.csv
