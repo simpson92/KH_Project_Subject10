@@ -1,0 +1,10 @@
+{
+  "window_seconds": 5.0,
+  "min_window_fill_ratio": 0.8,
+  "min_valid_feature_ratio": 0.6,
+  "min_valid_features": 10,
+  "prediction_interval_sec": 0.25,
+  "confidence_threshold": 0.55,
+  "stabilization_buffer": 5,
+  "stabilization_min_votes": 3
+}
