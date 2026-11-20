@@ -1,0 +1,8 @@
+﻿date,course_day,time,owner,category,task,result,outputs,commit,pr,status
+2026-11-20,Day 07,14:18,S02,실험,7일차 0단계 — 1조 38-D 모델 다시 만들기 (Git에 joblib 없음),Val S05 Acc 0.9333 · F1 0.9450 · 84 / 90 → S05 모델과 같음,artifacts/team01/day06/ (Git 제외),,,완료
+2026-11-20,Day 07,14:51,S02,코드,"1조 7일차 실시간 연결 day07_team_* 5개 + 설정 (교재 41~45 기반) · 대표 인물 D6(가장 큰 BBox) · 짧은 clip Take 교체",realtime_utils.py 교재 그대로 재사용 · S02 잠금 · 세로 회전 · Target 6개 · pytest 198 passed,scripts/day07_team_* · configs/team01_day07_realtime.json · src/team_realtime_utils.py,e619304 · 151a596,,완료
+2026-11-20,Day 07,15:18,S02,데이터 QA,A. 7일차 입력 검사,16클래스 · 1140 Feature · Step 30 · S05 Val 90 / 90 세로 · Runtime-ready 87 / 90 (D01 T04 · T05 · D03 T01 4초 미만 → B단계 D03은 T02),main/day07/tables/ (Git 제외),,,완료
+2026-11-20,Day 07,15:25,S02,실험,B. S05 저장영상 18개 Stream 실행 (W5 · C0.45 · B5),Warm-up 18 / 18 · 마지막 Stable = 정답 7 / 18 · UNKNOWN 0.39 · 77.5 FPS · Keypoint 재생 결과와 conf까지 동일 (실시간 YOLO = 학습 Keypoint),main/day07/saved_video/ (Git 제외),,,완료
+2026-11-20,Day 07,15:34,S02,실험,C. 설정 비교 (한 번에 하나: Confidence 0.35 / 0.55 · Window 3 · Buffer 3 / 7),C0.35 → UNKNOWN 0.16 · 정답 11 / 18 · 틀린 Stable 0 / W3 → conf 0.51 → 0.44 / B3 → 11 / 18 · 흔들림 0.39 → 0.61 / B7 → 4 / 18 → 추천 W5 · C0.35 · B5,main/day07/runtime_comparison.csv · runtime_runs.csv,,,완료
+2026-11-20,Day 07,다음,S02,결정,Confidence 기본값 0.45 → 0.35 채택 여부 (PM 결정 기록),C 비교표 근거,,,,대기
+2026-11-20,Day 07,다음,전원,할 일,D. IP Webcam 16동작 (Target 6개씩 3번) + 일상 D01~D03 + 학습 안 한 동작 · C01 포함 / 없이 → E. 로그 분석,,main/day07/ip_webcam_summary.csv,,,대기

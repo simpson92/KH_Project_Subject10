@@ -72,3 +72,9 @@ reports/day06/tables/*.csv
 reports/day06/metrics/*.csv
 reports/day06/misclassified/*.csv
 reports/day06/experiments/*.csv
+
+# 1조 7일차 실시간 (day07_team_*) — 결과 MP4 · Frame 로그 CSV · IP Webcam 로그(_meta.json에 폰 IP)는 Git 제외
+# 커밋하는 것: day07/ 바로 아래 요약표 (runtime_comparison.csv · runtime_runs.csv · ip_webcam_summary.csv)
+reports/team_projects/team01/main/day07/saved_video/
+reports/team_projects/team01/main/day07/ip_webcam/
+reports/team_projects/team01/main/day07/tables/

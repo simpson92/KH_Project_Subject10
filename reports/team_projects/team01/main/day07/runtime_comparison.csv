@@ -1,0 +1,7 @@
+﻿setting,baseline,window_seconds,confidence_threshold,stabilization_buffer,stabilization_min_votes,clips,warmup_pass,prediction_updates,unknown_ratio,stable_label_changes,stable_match_ratio,final_stable_correct,mean_confidence,mean_processing_fps
+w3_c0.45_s5,0,3.0,0.45,5,3,18,18,171,0.6082,0.667,0.1957,8,0.436,85.24
+w5_c0.35_s5,0,5.0,0.35,5,3,18,18,64,0.1562,0.611,0.2592,11,0.508,89.38
+w5_c0.45_s3,0,5.0,0.45,3,2,18,18,64,0.3906,0.611,0.3472,11,0.508,89.39
+w5_c0.45_s5,1,5.0,0.45,5,3,18,18,64,0.3906,0.389,0.1643,7,0.508,88.8
+w5_c0.45_s7,0,5.0,0.45,7,4,18,18,64,0.3906,0.222,0.0648,4,0.508,88.39
+w5_c0.55_s5,0,5.0,0.55,5,3,18,18,64,0.6406,0.278,0.1204,5,0.508,89.07

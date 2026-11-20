@@ -53,18 +53,21 @@ KH_Project_Subject10/
 │   ├── team01_main_manifest.csv      # 본 촬영 clip_id (454행)
 │   ├── team01_subject_split.json     # Train S01·S03·S04 / Val S05 / Test S02
 │   ├── team01_day06_baseline.json    # 6일차 RF 38-D
-│   └── team01_day06_e01_48d.json     # E-01 48-D (38-D + G-01~G-10)
+│   ├── team01_day06_e01_48d.json     # E-01 48-D (38-D + G-01~G-10)
+│   └── team01_day07_realtime.json    # 7일차 실시간 (Window · Confidence · Buffer + 경로 · S05 · 세로)
 ├── src/
 │   ├── common.py · pose_utils.py · feature_utils.py · sequence_utils.py   # 교과 공통 (아래 표)
 │   ├── team_feature_utils.py         # 팀 Feature G-01~G-10
 │   ├── team_dataset_utils.py         # QA · Human QA · Approved · Split · Leakage
 │   ├── team_label_utils.py           # 구간 라벨 초안 · V-01~V-10 검사
 │   ├── team_crosscheck_utils.py      # 라벨 교차 검수
+│   ├── realtime_utils.py             # 교과 7일차 실시간 공통 (수정 없이 재사용, 아래 표)
+│   ├── team_realtime_utils.py        # 1조 7일차: 설정 · 16클래스 · S05 · 세로 회전 · Target
 │   ├── referee_utils.py              # 스모크 테스트 공통
 │   └── vicon_utils.py                # VICON GLB → 3D JSON
 ├── scripts/
 │   ├── 17_referee_rule.py · 18_video_frame_features.py · 23_summarize_action_sequences.py   # 교과 공통 (아래 표)
-│   ├── day03_* · day04_* · day05_team_* · day06_team_*   # 1조 Pipeline (dayNN = 수업 진도에 맞춰 만든 날)
+│   ├── day03_* · day04_* · day05_team_* · day06_team_* · day07_team_*   # 1조 Pipeline (dayNN = 수업 진도에 맞춰 만든 날)
 │   ├── referee_00~04_*.py            # 스모크 테스트 (간이 검증)
 │   └── vicon_00~01_*.py              # VICON
 ├── tests/                            # 단위 테스트
@@ -88,6 +91,7 @@ KH_Project_Subject10/
 | `src/pose_utils.py` | COCO 17 이름 · Skeleton · 품질 판정 · `select_main_person` (D6 = 가장 큰 BBox) |
 | `src/feature_utils.py` | 관절각도 · 어깨 폭 정규화 · 좌우 반전 (38-D) |
 | `src/sequence_utils.py` | 38-D Frame Feature · Resampling (`day06_team_build_sequences.py`) |
+| `src/realtime_utils.py` | Sliding Window · 30 Step 예측 · Confidence · 다수결 · FPS (`day07_team_*`, 교재 7일차 그대로) |
 | `scripts/17_referee_rule.py` | 1조 U파울 규칙 (`day03_batch_video_qa.py`, `tests/test_referee_rule.py`) |
 | `scripts/18_video_frame_features.py` | 영상 → 38-D, 대표 인물 D6 반영본 (`day03_batch_video_qa.py`, `tests/test_main_person.py`) |
 | `scripts/23_summarize_action_sequences.py` | Sequence 요약 (`tests/test_team_sequences.py`, `tests/test_team_sequence_qa.py`) |
@@ -213,6 +217,37 @@ uv run python scripts/day06_team_compare.py \
 
 - 남은 오류: N00(D03 뒷머리 긁기) → A11 · A14, A04 T02 → A06, A07 → A05
 - E-01 채택은 보류 (D7), 좌우 반전 규칙 미결정 (D8)
+
+### 5. 실시간 연결 — Sliding Window · IP Webcam (7일차 진도)
+
+6일차 38-D RF 모델을 끝없이 들어오는 Frame에 연결합니다. 점수를 올리는 게 아니라 실시간에서만 생기는 문제
+(UNKNOWN · 흔들림 · 지연 · 세로 방향)를 숫자로 남기는 단계. 교재 41~45번을 참고해 1조 조건으로 새로 만들었어요.
+
+```bash
+# 0. 6일차 모델이 있어야 함 (Git에 joblib 없음 → 4번 섹션으로 각자 생성, Val 84 / 90 확인)
+uv run python scripts/day07_team_check_inputs.py                                   # A. 입력 검사
+uv run python scripts/day07_team_realtime_video.py --clip-id T01_S05_A06_T01       # B. 저장영상 1개 (MP4 + CSV)
+uv run python scripts/day07_team_realtime_video.py --first-takes --no-video        # B. S05 18개 (동작마다 첫 Take)
+uv run python scripts/day07_team_realtime_video.py --first-takes --no-video --confidence-threshold 0.35   # C. 값 하나만 바꿔 비교
+uv run python scripts/day07_team_summarize_runs.py                                 # C. 설정 비교표
+uv run python scripts/day07_team_ip_webcam.py --url "http://<폰 IP>:8080/video" --targets A01,A02,A03,A04,A05,A06   # D. 6개씩 3번
+uv run python scripts/day07_team_analyze_log.py --all                              # E. 동작별 기록표
+```
+
+| 파일 | 내용 | 출력 |
+| --- | --- | --- |
+| `day07_team_check_inputs.py` | 모델 · Feature 목록 · 학습 정보 · 설정 · S05 Val 90개 영상(세로 · 길이) 검사 (교재 41번) | `reports/.../main/day07/tables/` |
+| `day07_team_realtime_video.py` | S05 저장영상을 Stream처럼: Pose → 38-D → Window → 30 Step → RF → Confidence → 다수결 (교재 42번). S02 clip은 거부 | `reports/.../main/day07/saved_video/<설정>/` |
+| `day07_team_summarize_runs.py` | 설정별 Warm-up 통과 · UNKNOWN 비율 · Stable 흔들림 · FPS 비교표 (교재 43번) | `reports/.../main/day07/runtime_comparison.csv` · `runtime_runs.csv` |
+| `day07_team_ip_webcam.py` | IP Webcam 실시간. 세로 확인 · 가로면 회전 · `--targets` 6개 · `--protocol with_c01 / no_c01` (교재 44번) | `reports/.../main/day07/ip_webcam/` (로그 + `_meta.json`) |
+| `day07_team_analyze_log.py` | Target 구간만 모아 동작별 "N회 중 _회" · UNKNOWN · Raw 분포 · 혼동 쌍 (교재 45번) | `reports/.../main/day07/ip_webcam_summary.csv` |
+
+- 설정은 `configs/team01_day07_realtime.json`에서만 바꿔요 (코드에 숫자 직접 적지 않기). Confidence는 0.45로 시작 — 16클래스라 확률이 나뉨
+- 대표 인물은 학습 데이터와 같은 **가장 큰 BBox (D6)** — 교재 `frame_feature_from_pose()`(BBox conf 최고) 대신 `team_frame_feature_from_pose()`
+- S05 D01 T04 · T05 · D03 T01은 4초 미만이라 기본 Warm-up(5초 × 0.8)에서 Prediction 0번 → `--first-takes`는 D03 T01 대신 T02를 씀
+- 한 번에 하나만 비교: ① Confidence 0.35 / 0.45 / 0.55 → ② Window 5 / 3초 → ③ Buffer 3 / 5 / 7
+- 금지: S02(Test) 영상 사용 · 실시간 결과로 재학습 · MP4 / joblib / Frame 로그 커밋. 요약표(`day07/*.csv`)만 커밋
+- `stable_match_ratio` · "N회 중 _회"는 Accuracy가 아님 (사람이 누른 Target 기준 참고값)
 
 ---
 
