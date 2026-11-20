@@ -35,7 +35,9 @@ from src.team_realtime_utils import (
     DAY07_DIR,
     load_model_bundle,
     load_runtime_config,
+    select_first_take,
     val_clips,
+    warmup_seconds,
 )
 
 OUTPUT_PATH = DAY07_DIR / "tables" / "day07_team_input_check.csv"
@@ -134,9 +136,15 @@ def main(argv=None) -> int:
               f" · FPS {sorted(readable['fps'].unique().tolist())}")
         print(f"Duration       : {readable['duration_sec'].min():.1f} ~ {readable['duration_sec'].max():.1f}s"
               f" (중앙 {readable['duration_sec'].median():.1f}s)")
+    print(f"Main person    : {config.get('main_person', 'area')} (1조 D6 = area · 가장 큰 BBox)")
     print(f"Runtime-ready  : {ready} / {len(table)}  (영상 길이 ≥ Warm-up {required_sec:.1f}s)")
-    if ready < len(table) and not missing:
-        print("  → Warm-up보다 짧은 영상은 Prediction이 안 나올 수 있음 (오류 아님). 아래 CSV의 runtime_ready=0 확인")
+    not_ready = table[(table["open_ok"] == 1) & (table["runtime_ready"] == 0)]
+    if len(not_ready):
+        print("  Warm-up보다 짧음 (Prediction 0번 · 오류 아님): "
+              + ", ".join(f"{r.clip_id} {r.duration_sec:.2f}s" for r in not_ready.itertuples()))
+    _, replaced = select_first_take(clips, warmup_seconds(config))
+    for item in replaced:
+        print(f"  B단계 18개(--first-takes)에서 {item['from']} → {item['to']}로 바꿔 씀")
     print()
     print(f"Saved: {OUTPUT_PATH.relative_to(ROOT)}")
 

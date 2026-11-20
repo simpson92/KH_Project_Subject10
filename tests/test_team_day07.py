@@ -26,8 +26,10 @@ from src.team_realtime_utils import (
     parse_targets,
     resolve_settings,
     select_first_take,
+    team_frame_feature_from_pose,
     val_clips,
     validate_runtime_config,
+    warmup_seconds,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -175,11 +177,26 @@ def test_val_clips_are_s05_only_and_first_takes_are_18():
     clips = val_clips(config)
     assert len(clips) == 90
     assert set(clips["subject_id"]) == {"S05"}
-    first = select_first_take(clips)
-    assert len(first) == 18
+    first, replaced = select_first_take(clips)                        # 길이 조건 없음 → 동작마다 첫 Take
+    assert len(first) == 18 and replaced == []
     assert first["action_id"].tolist() == sorted(first["action_id"])
     assert set(first.loc[first["action_id"].isin(["D01", "D02", "D03"]), "train_label"]) == {"N00"}
     assert first.set_index("action_id").loc["A03", "take_id"] == "T02"   # A03은 T01이 없음
+
+
+def test_short_clips_and_warmup_take_replacement():
+    # S05 D01 T04 · T05 · D03 T01은 4초 미만 → 기본 Warm-up(5초 × 0.8 = 4초)이면 Prediction 0번
+    config = load_json(CONFIG_PATH)
+    clips = val_clips(config)
+    assert warmup_seconds(config) == pytest.approx(4.0)
+    short = clips[clips["duration_sec"] < warmup_seconds(config)]["clip_id"].tolist()
+    assert sorted(short) == ["T01_S05_D01_T04", "T01_S05_D01_T05", "T01_S05_D03_T01"]
+
+    chosen, replaced = select_first_take(clips, warmup_seconds(config))
+    assert len(chosen) == 18
+    assert (chosen["duration_sec"] >= 4.0).all()                    # 18개 모두 Prediction 1번 이상 가능
+    assert replaced == [{"action_id": "D03", "from": "T01_S05_D03_T01", "from_sec": pytest.approx(3.833),
+                         "to": "T01_S05_D03_T02", "to_sec": chosen.set_index("action_id").loc["D03", "duration_sec"]}]
 
 
 def test_saved_video_refuses_test_clip():
@@ -217,6 +234,41 @@ class _FakeResult:
         self.boxes = _T([0.9])
         self.boxes.conf = _T([0.9])
         self.keypoints = type("K", (), {"xy": _T(keypoints[None])})()
+
+
+class _TwoPeople:
+    """사람 2명: 0번 = 작은 BBox · conf 높음, 1번 = 큰 BBox · conf 낮음."""
+
+    def __init__(self, small_points, big_points):
+        self.boxes = _T([0.95, 0.60])
+        self.boxes.conf = _T([0.95, 0.60])
+        self.boxes.xyxy = _T([[0, 0, 50, 100], [0, 0, 400, 900]])
+        self.keypoints = type("K", (), {"xy": _T(np.stack([small_points, big_points]))})()
+
+
+def test_main_person_is_largest_bbox_like_training(standing_pose):
+    from src.realtime_utils import frame_feature_from_pose
+
+    small = standing_pose.astype(np.float32)
+    big = small.copy()
+    big[9, 1] -= 120                                                # 큰 사람만 왼손목을 듦
+    result = _TwoPeople(small, big)
+    team = team_frame_feature_from_pose(result, "area")             # 1조 D6
+    textbook = frame_feature_from_pose(result)                      # 수업: conf 최고
+    expected_big = team_frame_feature_from_pose(_FakeResult(big), "area")
+    expected_small = team_frame_feature_from_pose(_FakeResult(small), "area")
+    np.testing.assert_allclose(team, expected_big)                  # 큰 BBox 사람을 봄
+    np.testing.assert_allclose(textbook, expected_small)            # 수업 함수는 작은(conf 높은) 사람
+    assert not np.allclose(team, textbook)
+    # 한 명일 때는 수업 함수와 같은 38-D (계산 자체는 같음)
+    np.testing.assert_allclose(team_frame_feature_from_pose(_FakeResult(big)), frame_feature_from_pose(_FakeResult(big)))
+
+
+def test_main_person_config_is_validated():
+    config = load_json(CONFIG_PATH)
+    assert config["main_person"] == "area"
+    config["main_person"] = "tallest"
+    assert any("main_person" in p for p in validate_runtime_config(config))
 
 
 def test_run_clip_end_to_end(tmp_path, standing_pose):

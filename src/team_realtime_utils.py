@@ -10,6 +10,9 @@ from __future__ import annotations
 #   - 모델: 6일차 1조 38-D RF, 클래스 16개는 코드에 적지 않고 rf_training_info.json에서 읽음
 #   - 영상: S05(Val)만. S02(Test)는 잠금
 #   - 방향: 세로 1080×1920 (A5). 가로로 들어오면 회전
+#   - 대표 인물: 가장 큰 BBox (D6). 수업 frame_feature_from_pose()는 BBox conf 최고라 학습과 다름
+#     → team_frame_feature_from_pose()가 select_main_person(result, "area")로 같은 사람을 고름
+#   - 저장영상 18개: 동작마다 "Warm-up보다 긴" 첫 Take (S05 D01 T04 · T05 · D03 T01은 4초 미만)
 #   - Target: 16개를 숫자키 1~6에 다 못 넣으므로 --targets로 6개씩
 # 무거운 라이브러리(ultralytics · torch)는 실제 실행할 때만 불러옵니다 → 테스트는 YOLO 없이 돌아감.
 import json
@@ -48,6 +51,7 @@ RUNTIME_KEYS = (
 TEAM_KEYS = ("model_dir", "model_file", "video_dir", "video_subject", "expect_portrait")
 
 ROTATIONS = ("clockwise", "counterclockwise", "none")
+VIDEO_FPS = 30.0                                  # 본 촬영 30 FPS (A5) — split의 frame_count → 초
 MAX_TARGETS = 6                                   # 숫자키 1~6
 DAILY_TO_N00 = {"D01", "D02", "D03"}              # 일상 동작 → 정답은 N00
 UNTRAINED_TARGET = "X"                            # 학습 안 한 동작 (정답 없음)
@@ -95,6 +99,10 @@ def validate_runtime_config(config: dict) -> list[str]:
         problems.append(f"video_subject={config['video_subject']}는 Test Subject — 저장영상 실험에 쓸 수 없음")
     if config.get("landscape_rotation", "clockwise") not in ROTATIONS:
         problems.append(f"landscape_rotation은 {ROTATIONS} 중 하나")
+    from src.pose_utils import MAIN_PERSON_MODES
+
+    if config.get("main_person", "area") not in MAIN_PERSON_MODES:
+        problems.append(f"main_person은 {MAIN_PERSON_MODES} 중 하나 (1조 D6 = area)")
     return problems
 
 
@@ -300,6 +308,40 @@ def fit_height(frame: np.ndarray, target_height: int) -> np.ndarray:
 
 
 # --------------------------------------------------
+# Frame Feature — 대표 인물 = 가장 큰 BBox (D6, 학습 데이터와 같은 사람)
+# --------------------------------------------------
+def team_frame_feature_from_pose(result, main_person: str = "area"):
+    """YOLO Pose 결과 → 38-D (없으면 None).
+
+    수업 realtime_utils.frame_feature_from_pose()와 계산은 같고, 사람 고르는 기준만 다름.
+      수업: BBox conf가 가장 높은 사람
+      1조: 가장 큰 BBox (D6 — day04_build_team_sequences.py가 학습 데이터를 이 기준으로 만듦)
+    화면에 사람이 여럿일 때(교실 IP Webcam) 학습과 같은 사람을 보게 하기 위함.
+    """
+    from src.feature_utils import normalize_by_shoulder_width, selected_joint_angles
+    from src.pose_utils import _to_numpy, select_main_person
+
+    index = select_main_person(result, main_person)
+    if index is None:
+        return None
+    keypoints = _to_numpy(result.keypoints.xy[index]).astype(np.float32)
+    if keypoints.shape != (17, 2):
+        return None
+    try:
+        normalized, _, _ = normalize_by_shoulder_width(keypoints)
+    except ValueError:
+        return None
+    angles = selected_joint_angles(keypoints)
+    feature = [float(value) for point in normalized for value in (point[0], point[1])]
+    feature += [float(angles[name]) for name in
+                ("left_elbow_angle", "right_elbow_angle", "left_knee_angle", "right_knee_angle")]
+    feature = np.asarray(feature, dtype=np.float32)
+    if len(feature) != 38 or not np.all(np.isfinite(feature)):
+        return None
+    return feature
+
+
+# --------------------------------------------------
 # S05 Val 저장영상 목록
 # --------------------------------------------------
 def val_clips(config: dict, split_dir: Path = SPLIT_DIR) -> pd.DataFrame:
@@ -309,13 +351,34 @@ def val_clips(config: dict, split_dir: Path = SPLIT_DIR) -> pd.DataFrame:
     clips = split[split["subject_id"].astype(str) == subject].copy()
     video_dir = ROOT / config["video_dir"]
     clips["video_abspath"] = [str(video_dir / name) for name in clips["video_file"]]
-    columns = ["clip_id", "subject_id", "action_id", "train_label", "take_id", "video_file", "video_abspath"]
+    clips["duration_sec"] = (pd.to_numeric(clips["frame_count"], errors="coerce") / VIDEO_FPS).round(3)
+    columns = ["clip_id", "subject_id", "action_id", "train_label", "take_id", "video_file", "video_abspath",
+               "duration_sec"]
     return clips[columns].sort_values(["action_id", "take_id"]).reset_index(drop=True)
 
 
-def select_first_take(clips: pd.DataFrame) -> pd.DataFrame:
-    """동작마다 첫 Take 1개 → 신호 15 + D01 · D02 · D03 = 18개 (3단계 B)."""
-    return clips.groupby("action_id", sort=True).head(1).reset_index(drop=True)
+def warmup_seconds(config: dict) -> float:
+    """첫 Prediction까지 필요한 시간 = window_seconds × min_window_fill_ratio (기본 5 × 0.8 = 4초)."""
+    return float(config["window_seconds"]) * float(config["min_window_fill_ratio"])
+
+
+def select_first_take(clips: pd.DataFrame, min_duration: float = 0.0) -> tuple[pd.DataFrame, list[dict]]:
+    """동작마다 Take 1개 → 신호 15 + D01 · D02 · D03 = 18개 (3단계 B).
+
+    Warm-up(min_duration)보다 짧은 Take는 Prediction이 0번이라 "모든 영상 Prediction 1번 이상" 기준을
+    못 넘음 → 그 동작의 다음 Take로 바꿈. 바꾼 내역을 같이 돌려줌 (PM 보고용).
+    설정 비교(C)에서 clip 묶음이 바뀌지 않게, min_duration은 기본 설정(5초 × 0.8)으로 정함.
+    """
+    chosen, replaced = [], []
+    for action_id, group in clips.groupby("action_id", sort=True):
+        ready = group[group["duration_sec"] >= min_duration]
+        pick = ready.iloc[0] if len(ready) else group.iloc[0]
+        first = group.iloc[0]
+        if pick["clip_id"] != first["clip_id"]:
+            replaced.append({"action_id": action_id, "from": first["clip_id"], "from_sec": first["duration_sec"],
+                             "to": pick["clip_id"], "to_sec": pick["duration_sec"]})
+        chosen.append(pick)
+    return pd.DataFrame(chosen).reset_index(drop=True), replaced
 
 
 # --------------------------------------------------

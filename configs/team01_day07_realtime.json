@@ -12,6 +12,7 @@
   "video_dir": "data/team_projects/team01/main/rgb/videos",
   "video_subject": "S05",
   "expect_portrait": true,
+  "main_person": "area",
   "landscape_rotation": "clockwise",
   "display_height": 900
 }

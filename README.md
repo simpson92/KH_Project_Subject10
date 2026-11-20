@@ -243,6 +243,8 @@ uv run python scripts/day07_team_analyze_log.py --all                           
 | `day07_team_analyze_log.py` | Target 구간만 모아 동작별 "N회 중 _회" · UNKNOWN · Raw 분포 · 혼동 쌍 (교재 45번) | `reports/.../main/day07/ip_webcam_summary.csv` |
 
 - 설정은 `configs/team01_day07_realtime.json`에서만 바꿔요 (코드에 숫자 직접 적지 않기). Confidence는 0.45로 시작 — 16클래스라 확률이 나뉨
+- 대표 인물은 학습 데이터와 같은 **가장 큰 BBox (D6)** — 교재 `frame_feature_from_pose()`(BBox conf 최고) 대신 `team_frame_feature_from_pose()`
+- S05 D01 T04 · T05 · D03 T01은 4초 미만이라 기본 Warm-up(5초 × 0.8)에서 Prediction 0번 → `--first-takes`는 D03 T01 대신 T02를 씀
 - 한 번에 하나만 비교: ① Confidence 0.35 / 0.45 / 0.55 → ② Window 5 / 3초 → ③ Buffer 3 / 5 / 7
 - 금지: S02(Test) 영상 사용 · 실시간 결과로 재학습 · MP4 / joblib / Frame 로그 커밋. 요약표(`day07/*.csv`)만 커밋
 - `stable_match_ratio` · "N회 중 _회"는 Accuracy가 아님 (사람이 누른 Target 기준 참고값)

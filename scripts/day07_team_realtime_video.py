@@ -14,7 +14,9 @@ from __future__ import annotations
 #   - 영상: --clip-id로 S05 Val clip을 고름 (정답 = splits/val.csv의 train_label, D01~D03 → N00)
 #           S02(Test) · 다른 Subject clip은 실행 거부
 #   - 세로: 첫 Frame이 가로면 회전 (landscape_rotation)
-#   - 여러 clip을 한 번에: --first-takes (동작마다 첫 Take = 18개), --all (90개)
+#   - 대표 인물: 가장 큰 BBox (D6 — 학습 데이터와 같은 기준, team_frame_feature_from_pose)
+#   - 여러 clip을 한 번에: --first-takes (동작마다 Warm-up보다 긴 첫 Take = 18개), --all (90개)
+#     S05 D03 T01(3.8초)은 Warm-up 4초보다 짧아 Prediction 0번 → D03 T02로 바꿔 씀 (바꾼 내역 출력)
 #   - 결과: reports/team_projects/team01/main/day07/saved_video/<설정>/<clip_id>.csv · .mp4 (Git 제외)
 #
 # 실행
@@ -38,7 +40,6 @@ from src.realtime_utils import (
     FPSMeter,
     PredictionStabilizer,
     TimedFeatureBuffer,
-    frame_feature_from_pose,
     predict_from_window,
     validate_runtime_values,
 )
@@ -55,7 +56,9 @@ from src.team_realtime_utils import (
     option_name,
     resolve_settings,
     select_first_take,
+    team_frame_feature_from_pose,
     val_clips,
+    warmup_seconds,
 )
 
 PROJECT_CONFIG_PATH = ROOT / "configs" / "project.json"
@@ -65,7 +68,7 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser()
     pick = parser.add_mutually_exclusive_group(required=True)
     pick.add_argument("--clip-id", action="append", help="S05 Val clip (여러 번 줄 수 있음)")
-    pick.add_argument("--first-takes", action="store_true", help="동작마다 첫 Take 1개 = 18개")
+    pick.add_argument("--first-takes", action="store_true", help="동작마다 Warm-up보다 긴 첫 Take 1개 = 18개")
     pick.add_argument("--all", action="store_true", help="S05 Val 90개 전부")
     parser.add_argument("--window-seconds", type=float, default=None)
     parser.add_argument("--confidence-threshold", "--confidence", dest="confidence", type=float, default=None)
@@ -79,7 +82,12 @@ def parse_args(argv=None):
 def pick_clips(args, config: dict) -> pd.DataFrame:
     clips = val_clips(config)
     if args.first_takes:
-        return select_first_take(clips)
+        # 설정을 바꿔 비교해도 clip 묶음이 같도록 기본 설정의 Warm-up(5초 × 0.8)으로 고름
+        chosen, replaced = select_first_take(clips, warmup_seconds(config))
+        for item in replaced:
+            print(f"[Take 변경] {item['action_id']}: {item['from']} ({item['from_sec']:.2f}s < Warm-up "
+                  f"{warmup_seconds(config):.1f}s) → {item['to']} ({item['to_sec']:.2f}s)")
+        return chosen
     if args.all:
         return clips
     unknown = [clip_id for clip_id in args.clip_id if clip_id not in set(clips["clip_id"])]
@@ -103,7 +111,8 @@ def draw_status(frame, lines: list[str]) -> None:
 
 
 def run_clip(clip: dict, settings: dict, bundle: dict, pose_predict, output_dir: Path,
-             write_video: bool, expect_portrait: bool, rotation: str, names: dict) -> dict:
+             write_video: bool, expect_portrait: bool, rotation: str, names: dict,
+             main_person: str = "area") -> dict:
     """Clip 1개를 Stream처럼 처리하고 Frame 로그 CSV(+ MP4)를 저장. 요약 dict를 돌려줌."""
     source = Path(clip["video_abspath"])
     if not source.exists():
@@ -140,7 +149,7 @@ def run_clip(clip: dict, settings: dict, bundle: dict, pose_predict, output_dir:
         loop_start = time.perf_counter()
 
         result = pose_predict(frame)
-        feature = frame_feature_from_pose(result)         # 38-D 또는 None
+        feature = team_frame_feature_from_pose(result, main_person)   # 38-D 또는 None (D6: 가장 큰 BBox)
         feature_buffer.append(video_time, feature)
         ready = feature_buffer.is_ready(
             min_window_fill_ratio=settings["min_window_fill_ratio"],
@@ -255,11 +264,13 @@ def main(argv=None) -> int:
         output_dir = ROOT / output_dir
     run_dir = output_dir / option_name(settings)
 
-    print(f"Setting: {option_name(settings)} (min votes {settings['stabilization_min_votes']}) · {len(clips)} clips")
+    print(f"Setting: {option_name(settings)} (min votes {settings['stabilization_min_votes']}) · {len(clips)} clips"
+          f" · 대표 인물 {config.get('main_person', 'area')}")
     summaries = []
     for index, clip in enumerate(clips.to_dict("records"), start=1):
         summary = run_clip(clip, settings, bundle, pose_predict, run_dir, not args.no_video,
-                           bool(config["expect_portrait"]), config.get("landscape_rotation", "clockwise"), names)
+                           bool(config["expect_portrait"]), config.get("landscape_rotation", "clockwise"), names,
+                           config.get("main_person", "area"))
         summaries.append(summary)
         mark = "✓" if summary["final_stable"] == summary["expected_label"] else " "
         print(f"[{index:2d}/{len(clips)}] {summary['clip_id']:17s} {summary['duration_sec']:4.1f}s "

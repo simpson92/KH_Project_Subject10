@@ -13,6 +13,7 @@ from __future__ import annotations
 #       D01~D03(일상 동작)은 정답 N00으로 기록, X = 학습 안 한 동작 (정답 없음)
 #   - 세로: 첫 Frame의 높이 > 너비를 먼저 확인. 가로면 회전하고 로그에 rotated=1
 #           (가로 그대로 들어오면 결과 전부 무효 — 가이드 4쪽)
+#   - 대표 인물: 가장 큰 BBox (D6). 교실에서 뒤에 다른 사람이 잡혀도 학습과 같은 기준으로 고름
 #   - --protocol with_c01 / no_c01: 학습 clip 순서(N00 → C01 → 신호 → N00)대로 했는지 기록
 #   - 실행 조건(URL · 해상도 · 설정 · Target)을 같은 이름의 _meta.json에 저장
 #   - 화면: 1920 높이는 모니터에 안 들어가서 표시만 축소 (YOLO에는 원본)
@@ -45,7 +46,6 @@ from src.realtime_utils import (
     FPSMeter,
     PredictionStabilizer,
     TimedFeatureBuffer,
-    frame_feature_from_pose,
     predict_from_window,
     validate_runtime_values,
 )
@@ -63,6 +63,7 @@ from src.team_realtime_utils import (
     option_name,
     parse_targets,
     resolve_settings,
+    team_frame_feature_from_pose,
 )
 
 PROJECT_CONFIG_PATH = ROOT / "configs" / "project.json"
@@ -130,6 +131,7 @@ def main(argv=None) -> int:
     rotation = config.get("landscape_rotation", "clockwise")
     display_height = int(args.display_height or config.get("display_height", 900))
     keep_buffer = bool(args.keep_buffer_on_target)
+    main_person = config.get("main_person", "area")
 
     pose_predict = load_pose_backend(load_json(PROJECT_CONFIG_PATH))
     capture = cv2.VideoCapture(args.url)
@@ -184,7 +186,7 @@ def main(argv=None) -> int:
     while True:
         elapsed = time.perf_counter() - session_start
         result = pose_predict(frame)
-        feature = frame_feature_from_pose(result)
+        feature = team_frame_feature_from_pose(result, main_person)   # D6: 가장 큰 BBox
         feature_buffer.append(elapsed, feature)
         ready = feature_buffer.is_ready(
             min_window_fill_ratio=settings["min_window_fill_ratio"],
@@ -237,6 +239,7 @@ def main(argv=None) -> int:
             "frame_width": width,
             "frame_height": height,
             "rotated": int(rotated),
+            "people": len(result.boxes) if getattr(result, "boxes", None) is not None else 0,
             "feature_ok": int(feature is not None),
             "window_seconds": settings["window_seconds"],
             "confidence_threshold": settings["confidence_threshold"],
@@ -314,6 +317,8 @@ def main(argv=None) -> int:
         "targets": targets,
         "settings": settings,
         "keep_buffer_on_target": keep_buffer,
+        "main_person": main_person,
+        "multi_person_frames": sum(row["people"] > 1 for row in log_rows),
         "model": str(bundle["paths"]["model"].relative_to(ROOT)),
         "classes": bundle["classes"],
         "sequence_steps": bundle["sequence_steps"],
@@ -321,7 +326,9 @@ def main(argv=None) -> int:
     (output_dir / f"{stem}_meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print()
-    print(f"Frames: {len(log_rows)} · Mean processing FPS: {mean_fps:.2f}")
+    multi = sum(row["people"] > 1 for row in log_rows)
+    print(f"Frames: {len(log_rows)} · Mean processing FPS: {mean_fps:.2f}"
+          f" · 사람 2명 이상 Frame {multi}개 (대표 인물 = {main_person})")
     print(f"Saved: {output_log}")
     print(f"Meta : {output_dir / (stem + '_meta.json')}")
     print("다음: uv run python scripts/day07_team_analyze_log.py")
