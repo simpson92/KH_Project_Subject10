@@ -1,20 +1,35 @@
-# Subject 10 - Pose Estimation & Action Analysis
+# RefSign — 농구 심판 수신호 실시간 인식 → 전광판
 
-교과 10 자세추정 이론·실습 프로젝트입니다.
-사전학습된 YOLO Pose(`yolo11n-pose.pt`)로 사람의 관절을 찾고, 관절 좌표를 숫자 Feature로 바꾸어 동작을 인식하는 전체 과정을 일차별로 실습합니다.
+교과 10 자세추정 **1조 프로젝트**입니다.
+농구 심판이 파울 후 보내는 수신호(FIBA) 15개를 웹캠 영상에서 YOLO Pose로 인식해 전광판에 표시하는 것을 목표로 합니다.
 
 ```text
-Frame → Pose → Keypoint → Feature → Sequence → Action Recognition → Realtime → Tracking
+웹캠 영상 → YOLO Pose (COCO 17) → 38-D Frame Feature (+ 팀 Feature G-01~G-10)
+   → Sequence → Random Forest → 수신호 판정 → 전광판 (FastAPI → 화면)
 ```
+
+> **2026-11-20 레포 정리** — 교과 10 수업 실습(교재 번호 코드·결과)은 조원 각자 개인 레포에서 진행합니다.
+> 이 레포에는 1조 프로젝트와, 1조 코드가 실제로 사용하는 교과 공통 코드만 남겼습니다.
+
+## 신호 클래스
+
+| ID | 내용 |
+| --- | --- |
+| A01~A15 | 블로킹 · 홀딩 · U파울 · 테크니컬 · 푸싱 · 트래블링 · 더블드리블 · 팔꿈치 · 샷클락 · 킥볼 · 머리 가격 · 후킹 · 백코트 · 슈팅 동작 아닌 파울 · 교체 |
+| C01 | 시계 정지 (각 신호 앞) |
+| N00 | 신호 없음 — 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 긁기는 학습 Label N00 |
+| X | 전환 구간 (구간 라벨에서만 사용) |
+
+정의 · 라벨링 규칙: [`docs/referee/02_라벨링_가이드.md`](docs/referee/02_라벨링_가이드.md) · `configs/team01_action_classes.csv`
 
 ## 개발환경
 
-| 항목 | 값 (`reports/day01/environment.txt`) |
+| 항목 | 값 |
 | --- | --- |
 | OS | Windows + WSL2 Ubuntu |
-| Python | 3.12.16 (`uv` 가상환경) |
+| Python | 3.12 (`uv` 가상환경) |
 | PyTorch | 2.15.0+cu132 (CUDA 13.2) |
-| Ultralytics | 8.4.203 |
+| Ultralytics | 8.4.203 (`yolo11n-pose.pt`) |
 | OpenCV | 5.0.0 |
 | GPU | NVIDIA GeForce RTX 3060 |
 
@@ -22,448 +37,205 @@ Frame → Pose → Keypoint → Feature → Sequence → Action Recognition → 
 cd ~/ai_vision/subject10_pose_action
 uv sync
 source .venv/bin/activate
-python scripts/00_check_environment.py
+uv run pytest -q          # YOLO · GPU · data/ 없이 실행되는 단위 테스트
 ```
 
-`data/`, 이미지·영상, 모델 가중치(`*.pt`), 실행 결과 CSV는 Git에 올리지 않습니다 (`.gitignore`).
+`data/`, 이미지 · 영상, 모델 가중치(`*.pt`, `*.joblib`), 실행 결과 CSV 대부분은 Git에 올리지 않습니다 (`.gitignore`).
 
 ## 폴더 구조
 
 ```text
-subject10_pose_action/
-├── configs/project.json        # 모델명 · 이미지 크기 · Confidence 기준 · 장치
+KH_Project_Subject10/
+├── configs/
+│   ├── project.json                  # YOLO 모델 · 이미지 크기 · Confidence 기준 · 장치 (교과 공통)
+│   ├── team01_action_classes.csv     # A01~A15 · C01 · N00 · D01~D03 정의
+│   ├── team01_clip_manifest.csv      # 스모크 100개 clip_id
+│   ├── team01_main_manifest.csv      # 본 촬영 clip_id (454행)
+│   ├── team01_subject_split.json     # Train S01·S03·S04 / Val S05 / Test S02
+│   ├── team01_day06_baseline.json    # 6일차 RF 38-D
+│   └── team01_day06_e01_48d.json     # E-01 48-D (38-D + G-01~G-10)
 ├── src/
-│   ├── common.py               # 설정 읽기 · GPU/CPU 선택      (1일차)
-│   ├── pose_utils.py           # COCO 17 이름 · Skeleton · 품질 판정 (2일차)
-│   ├── feature_utils.py        # 관절각도 · 정규화 · 좌우 반전   (3일차)
-│   └── team_dataset_utils.py   # 1조 QA · Human QA · Split · Leakage (5일차)
-├── scripts/                    # 00~32 수업 순서대로 실행 + day0N_* 1조 확장
-├── reports/                    # 일차별 결과 (CSV·이미지는 Git 제외)
-├── docs/referee/               # 1조 프로젝트 설계 문서
-└── daily_csv/                  # 날짜별 작업 기록 (한 줄 = 작업 하나, S 번호만)
+│   ├── common.py · pose_utils.py · feature_utils.py · sequence_utils.py   # 교과 공통 (아래 표)
+│   ├── team_feature_utils.py         # 팀 Feature G-01~G-10
+│   ├── team_dataset_utils.py         # QA · Human QA · Approved · Split · Leakage
+│   ├── team_label_utils.py           # 구간 라벨 초안 · V-01~V-10 검사
+│   ├── team_crosscheck_utils.py      # 라벨 교차 검수
+│   ├── referee_utils.py              # 스모크 테스트 공통
+│   └── vicon_utils.py                # VICON GLB → 3D JSON
+├── scripts/
+│   ├── 17_referee_rule.py · 18_video_frame_features.py · 23_summarize_action_sequences.py   # 교과 공통 (아래 표)
+│   ├── day03_* · day04_* · day05_team_* · day06_team_*   # 1조 Pipeline (dayNN = 수업 진도에 맞춰 만든 날)
+│   ├── referee_00~04_*.py            # 스모크 테스트 (간이 검증)
+│   └── vicon_00~01_*.py              # VICON
+├── tests/                            # 단위 테스트
+├── docs/referee/                     # 설계 문서 00~05 · 결정 기록 · 버전 표
+├── reports/
+│   ├── team_projects/team01/         # 촬영 보고서 · main/ (Sequence · dataset · labels · day06 결과)
+│   ├── referee/smoke/                # 스모크 결과
+│   ├── vicon/                        # VICON 3D 추출 결과
+│   └── day03/challenge/feature_design.md   # 3일차 Feature 설계 (04 설계서 근거)
+├── artifacts/team01/day06/           # RF 학습 정보 json (joblib은 Git 제외)
+└── daily_csv/                        # 날짜별 작업 기록 (한 줄 = 작업 하나, S 번호만)
 ```
+
+### 남겨 둔 교과 10 공통 코드
+
+1조 코드가 직접 import하거나 불러 쓰는 파일이라 지우면 안 됩니다.
+
+| 파일 | 1조에서 쓰는 곳 |
+| --- | --- |
+| `configs/project.json` · `src/common.py` | YOLO 설정 읽기 · GPU/CPU 선택 (모든 Pose 추출 스크립트) |
+| `src/pose_utils.py` | COCO 17 이름 · Skeleton · 품질 판정 · `select_main_person` (D6 = 가장 큰 BBox) |
+| `src/feature_utils.py` | 관절각도 · 어깨 폭 정규화 · 좌우 반전 (38-D) |
+| `src/sequence_utils.py` | 38-D Frame Feature · Resampling (`day06_team_build_sequences.py`) |
+| `scripts/17_referee_rule.py` | 1조 U파울 규칙 (`day03_batch_video_qa.py`, `tests/test_referee_rule.py`) |
+| `scripts/18_video_frame_features.py` | 영상 → 38-D, 대표 인물 D6 반영본 (`day03_batch_video_qa.py`, `tests/test_main_person.py`) |
+| `scripts/23_summarize_action_sequences.py` | Sequence 요약 (`tests/test_team_sequences.py`, `tests/test_team_sequence_qa.py`) |
+| `reports/day03/challenge/feature_design.md` | 3일차 Feature 측정 · 결정 (04 설계서와 팀 스크립트 주석이 참조) |
 
 ### `data/` 폴더 구조 (Git 제외 — 각자 PC에 직접 넣기)
 
 ```text
 data/
-├── day01/
-│   ├── coco8-pose.zip · coco8_pose/        # 강사님 제공 (압축 해제)
-│   ├── video/solution_ci_pose_demo.mp4     # 강사님 제공
-│   └── ip_webcam/                          # 각자 촬영 (front · arms_up · far.jpg)
-├── day02/
-│   ├── images/                             # 강사님 제공 6장 (front, arms_up, side …)
-│   └── videos/pose_quality_demo.mp4        # day01 영상 복사
-├── day03/
-│   ├── images/                             # 강사님 제공 8장 (arms_up_person_a …)
-│   ├── videos/feature_demo.mp4             # day02 영상 복사
-│   └── team/                               # 스모크 영상 가운데 Frame 4장 (Mini Challenge)
 ├── referee/smoke/
-│   ├── raw/ufoul/  S01~S05_ufoul_T01~T10.mp4     # 조원 휴대폰 촬영 50개
+│   ├── raw/ufoul/   S01~S05_ufoul_T01~T10.mp4    # 조원 휴대폰 촬영 50개
 │   ├── raw/pushing/ S01~S05_pushing_T01~T10.mp4  # 조원 휴대폰 촬영 50개
-│   └── subjects.csv                        # S번호 ↔ 이름 (실명 → 공유 금지)
-├── raw/vicon/                              # Motion_Visol.zip 압축 해제 (FBX 61개)
-│   └── glb/                                # Glb.zip 압축 해제 (GLB 60개)
-├── take_log.csv                            # vicon_00 실행 결과
-├── vicon_3d/                               # vicon_01 실행 결과 (3D JSON 50개)
-├── raw/webcam/                             # 본 촬영 원본 (폰에서 옮긴 그대로)
+│   └── subjects.csv                         # S 번호 ↔ 이름 (실명 → 공유 금지)
+├── raw/vicon/                               # Motion_Visol.zip 압축 해제 (FBX 61개)
+│   └── glb/                                 # Glb.zip 압축 해제 (GLB 60개)
+├── take_log.csv                             # vicon_00 실행 결과
+├── vicon_3d/                                # vicon_01 실행 결과 (3D JSON 50개)
+├── raw/webcam/                              # 본 촬영 원본 (폰에서 옮긴 그대로)
 └── team_projects/team01/
-    ├── rgb/videos/                         # 스모크 100개 (clip_id 이름, day04_make_clip_manifest --apply)
-    └── main/rgb/videos/                    # 본 촬영 (clip_id 이름) — 스모크와 이름이 겹쳐 폴더 분리
-models/hand_landmarker.task                 # MediaPipe 손 모델 (Git 제외, hand_detect_report.md 7장)
+    ├── rgb/videos/                          # 스모크 100개 (clip_id 이름)
+    └── main/
+        ├── rgb/videos/                      # 본 촬영 (clip_id 이름)
+        ├── keypoints/S0x/                   # day05_team_export_keypoints.py 결과
+        └── day06/sequences/                 # day06_team_build_sequences.py 결과
+models/hand_landmarker.task                  # MediaPipe 손 모델 (hand_detect_report.md 7장)
 ```
 
-- 강사님 제공 파일은 수업 자료에서, 스모크 영상 · VICON zip은 조 공유 폴더에서 받아요.
-- `take_log.csv`, `vicon_3d/`는 받는 게 아니라 스크립트를 실행하면 생겨요.
-- 영상 · 사진에는 조원 얼굴이 있어서 레포나 외부에 올리지 않아요.
+- 스모크 영상 · VICON zip · 본 촬영 영상은 조 공유 폴더에서 받아요. 영상 · 사진에는 조원 얼굴이 있어서 레포나 외부에 올리지 않아요.
 - 본 촬영 영상은 카카오톡 말고 USB · 구글 드라이브로 **원본** 그대로 옮겨요 (카톡은 다시 압축하고 촬영 시각을 지움).
+- `take_log.csv`, `vicon_3d/`, `keypoints/`, `day06/sequences/`는 받는 게 아니라 스크립트를 실행하면 생겨요.
 
 ---
 
-## Day 01 - Pose 전체 구조·개발환경·실제 데이터 입력
+## Pipeline
 
-### 사용한 입력
+### 1. 스모크 · Feature 확인 (3일차 진도)
 
-- COCO8-Pose
-- Ultralytics Pose Demo MP4 (`solution_ci_pose_demo.mp4`)
-- 스마트폰 IP Webcam 캡처 이미지 (정면 · 양팔 들기 · 먼 거리)
-
-### 학습한 내용
-
-- Pose Estimation과 Action Recognition의 차이
-- WSL 프로젝트와 Python 가상환경(`uv`) 구성
-- OpenCV / PyTorch / Ultralytics, GPU / CUDA 확인
-- COCO8-Pose 이미지 입력과 YOLO Pose 추론
-- Person Bounding Box · COCO 17 Keypoint · Skeleton
-- 실제 MP4를 Frame 단위로 읽고 Frame마다 Pose 적용
-- IP Webcam 연결 및 Frame 저장, 직접 촬영 이미지 Pose 추론
-
-### Day 01 Pipeline
-
-```text
-JPG / MP4 / IP Webcam
-        ↓
-Frame
-        ↓
-YOLO Pose
-        ↓
-Person Bounding Box
-        ↓
-COCO 17 Keypoint
-        ↓
-Skeleton
-```
-
-### 주요 실행 파일
-
-```text
-scripts/
-├── 00_check_environment.py
-├── 01_image_input.py
-├── 02_video_input.py
-├── 03_pose_image.py
-├── 04_pose_video.py
-└── 05_ip_webcam_capture.py
-```
-
-### 주요 결과
-
-- `reports/day01/environment.txt` — 실행환경 점검 결과
-- `reports/day01/pose_000000000036.txt` — COCO8-Pose 첫 이미지 Keypoint
-- `reports/day01/pose_front.txt` · `pose_arms_up.txt` · `pose_far.txt` — IP Webcam 촬영 이미지 Keypoint
-- `reports/day01/pose_demo_output.mp4` — MP4 Frame별 Pose 결과 (Git 제외)
-
-### Mini Challenge
-
-- 미진행
-
----
-
-## Day 02 - Keypoint 좌표와 Pose 품질 분석
-
-### 사용한 입력
-
-- 강사가 준비한 조건별 이미지 6장
-  - `front.jpg` · `arms_up.jpg` · `side.jpg` · `partial_body.jpg` · `occlusion.jpg` · `distance_far.jpg`
-- 1일차에서 사용한 실제 MP4 (`pose_quality_demo.mp4`로 복사)
-
-### 학습한 내용
-
-- Person BBox Confidence와 Keypoint Confidence 구분
-- COCO 17 Keypoint Pixel 좌표와 Normalized 좌표(이미지 크기 기준, 0~1)
-- Keypoint Confidence와 Threshold, Confidence 기준에 따른 Skeleton 표시
-- 여러 이미지의 Pose 품질 CSV 비교 (BBox Area Ratio, 평균 Keypoint Confidence, LOW 관절)
-- MP4의 Frame별 Pose 품질 분석, 불안정한 Frame을 숫자로 찾고 실제 영상과 연결
-
-### 실습에서 확인한 결과
-
-- `front.jpg` — 평균 Keypoint Confidence `0.9754`, LOW 관절 `0` → 정면 기준 이미지에서 안정적
-- `side.jpg` — 평균 Keypoint Confidence `0.7541`, LOW 관절 `4` → 6장 중 가장 불안정
-- `front.jpg` vs `distance_far.jpg` — 화면 속 사람 크기는 약 절반(`0.2996 → 0.1489`)으로 줄었지만, 평균 Keypoint Confidence는 `0.9754 → 0.9710`, LOW 관절은 둘 다 `0` → 이번 거리 범위에서는 품질 유지
-- MP4 — 60개 Frame 모두 사람 검출. 약 `0.80초`(Frame 25~26)에서 바닥 자세·얼굴 방향 때문에 눈·귀 Keypoint Confidence가 낮아짐
-
-### Day 02 Pipeline
-
-```text
-이미지 · MP4
-        ↓
-YOLO Pose
-        ↓
-Person BBox + COCO 17 Keypoint
-        ↓
-Pixel / Normalized 좌표
-        ↓
-Keypoint Confidence → Threshold
-        ↓
-조건별 · Frame별 Pose 품질 비교
-        ↓
-숫자와 실제 이미지·영상 연결
-```
-
-### 주요 실행 파일
-
-```text
-scripts/
-├── 06_check_day02_data.py
-├── 07_pose_image_detail.py
-├── 08_draw_skeleton_quality.py
-├── 09_compare_pose_images.py
-└── 10_pose_video_quality.py
-
-src/
-└── pose_utils.py
-```
-
-### 주요 결과 파일 (Git 제외)
-
-```text
-reports/day02/tables/
-├── front_keypoints.csv
-├── image_quality_summary.csv
-├── pose_quality_demo_frame_quality.csv
-└── pose_quality_demo_keypoints.csv
-```
-
-### Mini Challenge
-
-- 미진행 (`reports/day02/challenge/challenge_notes.md` 없음)
-
----
-
-## Day 03 - Joint Angle, Normalization & Frame Feature
-
-### 오늘 배운 내용
-
-- 세 Keypoint를 이용한 관절각도 계산 (가운데 관절 기준 두 벡터)
-- Hip Center 기준 몸 중심 이동, Shoulder Width 기준 크기 정규화
-- Near / Far, Person A / Person B 정규화 전·후 비교
-- COCO Left / Right 기준과 Keypoint 좌우 반전
-- 34개 Normalized 좌표 + 4개 관절각도(양 팔꿈치 · 양 무릎) = 38-D Frame Feature
-- 동작을 설명하는 Feature 선택, 규칙 기반 판정(Arms Up)의 한계
-- 영상의 각 Frame에서 38-D Feature를 만들고 시간에 따른 변화 확인
-
-### Day 03 핵심 흐름
-
-```text
-YOLO Pose
-        ↓
-COCO 17 Keypoint + Confidence
-        ↓
-관절각도
-        ↓
-Hip Center → Shoulder Width Normalization
-        ↓
-Normalized Keypoint 34개 + Joint Angle 4개
-        ↓
-38-D Frame Feature
-        ↓
-영상의 각 Frame에 반복
-        ↓
-시간에 따른 Feature 변화 → Sequence의 재료
-```
-
-### 오늘 추가한 주요 코드
-
-```text
-src/
-└── feature_utils.py
-
-scripts/
-├── 11_check_day03_data.py
-├── 12_joint_angle.py
-├── 13_normalize_pose.py
-├── 14_compare_normalization.py
-├── 15_flip_keypoints.py
-├── 16_make_frame_feature.py
-├── 17_arms_up_rule.py
-└── 18_video_frame_features.py
-```
-
-> `18_video_frame_features.py`: 교재 26절의 18번 코드 칸에 17번 코드가 그대로 들어 있습니다,
-> 교재 설명(Frame마다 38-D, `frame_id · time_sec · valid_pose · mean_keypoint_conf · low_keypoint_count`)대로 다시 작성했습니다.
-> 교재 데모 영상에서 `Total frames 60 / Valid pose frames 60 / Feature count 38`, Frame 1 왼팔꿈치 약 140°로 교재 결과와 일치합니다.
-
-### 오늘 이해한 핵심
-
-한 장의 Pose에서 얻은 Keypoint 좌표를 그대로 사용하는 것이 아니라,
-몸의 위치와 크기 차이를 줄인 Normalized 좌표와 관절각도를 이용하여
-한 Frame의 자세를 38개의 숫자로 표현했습니다.
-
-또한 동작을 구분할 때는 38개의 숫자를 무조건 모두 보는 것이 아니라,
-손목과 어깨의 상대 높이처럼 해당 동작을 설명하는 Feature를 선택하는 것이 중요하다는 것을 확인했습니다.
-
-영상에서는 같은 38-D Feature를 Frame마다 반복해서 만들고,
-Feature가 시간에 따라 변하는 모습을 확인했습니다.
-
-### Mini Challenge — 1조 농구 심판 수신호 (U파울 vs 푸싱)
-
-조원들이 휴대폰으로 촬영한 수신호 영상(U파울 · 푸싱) 중 2명 × 2동작 영상 4개로
-교재의 관절각도 · 정규화 · 38-D · Feature 선택 · 영상 변화 과정을 다시 수행했습니다.
-자세한 내용: [`reports/day03/challenge/feature_design.md`](reports/day03/challenge/feature_design.md)
-
-- 정규화: 정규화 후 동작 차이(`0.554` · `0.872`)가 사람 차이(`0.113`)보다 5~8배 큼.
-  단, 어깨 폭이 자세에 따라 변함 (같은 사람 `172.57 → 235.84 px`)
-- 선택한 Feature: `left_wrist_y`, `left_elbow_angle`, `left_wrist_y − nose_y`
-  (U파울은 손목이 머리 위라 음수, 푸싱은 양수)
-- 무릎 각도는 서서 하는 두 신호를 구분하지 못함
-- 영상의 시작·끝(팔을 내린 구간)은 두 동작이 같아, Frame 한 장이 아니라 시간 순서가 필요함
-- 17번 1조 규칙 (`scripts/17_referee_rule.py`): U파울 = 양 손목이 코보다 위 + 양 손목 거리 < 1.0 어깨 폭 → 사진 4장 · 영상 4개 모두 예상대로 판정 (푸싱 오판 0)
-
-### 추가 작업 — 테스트 · D6 · 타임라인
-
-| 파일 | 내용 | 실행 |
-| --- | --- | --- |
-| `tests/` | `feature_utils`(각도·정규화·좌우 반전·Near/Far 불변성), 1조 U파울 규칙, D6 대표 인물, 튐 탐지 단위 테스트. 가짜 Pose 좌표로 검사해서 YOLO·GPU·`data/` 없이 실행됨 | `uv run pytest -v` |
-| `src/pose_utils.py` `select_main_person()` | 여러 사람이 보이면 대표 인물 선택 (`area` = 가장 큰 BBox, D6 결정값 · `conf` · `first`) | 18번 `--main-person area` (기본) |
-| `scripts/18_video_frame_features.py` | D6 반영. CSV 맨 뒤에 `people` · `person_index` 열 추가 (38-D 열 위치는 그대로). 교재 결과 재현은 `--main-person first` | |
-| `scripts/day03_plot_feature_timeline.py` | 18번 CSV 1~4개 → `wrist − nose` · 팔꿈치 각도 · 어깨 폭 그래프, 앞 Frame 대비 \|Δ각도\| ≥ 40°인 Frame을 `feature_spikes.csv`로 저장 | 아래 |
-| `scripts/day03_batch_video_qa.py` | 스모크 영상 전체에 18번(38-D) · 17번(U파울 규칙) · 튐 탐지를 한 번에 실행 → 영상별 `video_qa.csv` (유효 Frame 비율, 다른 사람 등장, 어깨 폭 변화, 규칙 판정, PASS/REVIEW) + 사람 × 동작별 규칙 정답률 | `python scripts/day03_batch_video_qa.py` |
-
-```bash
-python scripts/day03_plot_feature_timeline.py \
-  --csv reports/day03/tables/S01_ufoul_T01_frame_features.csv \
-        reports/day03/tables/S01_pushing_T01_frame_features.csv
-# → reports/day03/images/feature_timeline.png, reports/day03/tables/feature_spikes.csv (Git 제외)
-```
-
-- 4일차에 `feature_utils.py`에 팀 Feature를 추가한 뒤 `uv run pytest`가 실패하면 기존 38-D 계산이 바뀐 것
-- 튐 Frame은 Pose 오류일 수도, 빠른 동작일 수도 있음 → 영상으로 확인 후 4일차 REVIEW 후보로 사용
-
-### 다음 수업
-
-4일차에는 여러 Frame의 Feature를 시간 순서로 묶어
-하나의 동작을 표현하는 **Sequence**로 확장합니다.
-
----
-
-## Day 04 준비 — clip_id 이름 규칙 · clip manifest
-
-4일차 교재 STEP 1(영상마다 고유 ID와 정답 Label)을 스모크 영상 100개에 먼저 적용합니다.
+U파울 · 푸싱 2동작 × 5명 × 10회 = 100개로 간이 검증 (본 Pipeline 아님).
 
 | 파일 | 내용 |
 | --- | --- |
-| `configs/team01_action_classes.csv` | A01~A15 · C01 · N00 정의 (`02_라벨링_가이드` 4장). `smoke_action` 칸 = 스모크 폴더 이름 (ufoul → A03, pushing → A05) |
-| `scripts/day04_make_clip_manifest.py` | 원본 이름(`s03 u파울-이름 (1).mp4`) 또는 `S01_ufoul_T01.mp4` → `T01_S##_A##_T##` + `configs/team01_clip_manifest.csv` |
+| `scripts/referee_00~04_*.py` · `reports/referee/smoke/` | 이름 정리 → 영상 확인 → Pose 추출 → LOSO 학습 → 오답 렌더링 |
+| `scripts/day03_batch_video_qa.py` | 스모크 전체에 18번(38-D) · 17번(U파울 규칙) · 튐 탐지 → `video_qa.csv` (PASS/REVIEW) |
+| `scripts/day03_plot_feature_timeline.py` | 18번 CSV → `wrist − nose` · 팔꿈치 각도 · 어깨 폭 그래프, 튐 Frame 표 |
+
+### 2. 촬영 영상 → Sequence (4일차 진도)
 
 ```bash
-python scripts/day04_make_clip_manifest.py           # 미리보기 + manifest 작성
-python scripts/day04_make_clip_manifest.py --apply   # data/team_projects/team01/rgb/videos/ 로 복사 (원본 유지)
+M=configs/team01_main_manifest.csv
+V=data/team_projects/team01/main/rgb/videos
+O=reports/team_projects/team01/main
+uv run python scripts/day04_check_team_videos.py --manifest $M --video-dir $V --output $O/tables/video_inventory.csv
+uv run python scripts/day04_build_team_sequences.py --manifest $M --video-dir $V --output-dir $O/sequences   # 이미 있는 clip은 건너뜀
+uv run --with mediapipe python scripts/day04_hand_detect_check.py --manifest $M --video-dir $V \
+  --sequence-dir $O/sequences --output-dir $O/tables --scales 1.0 --modes crop
+uv run python scripts/day04_pose_conf_report.py
 ```
 
-- 사람 번호 = `data/referee/smoke/subjects.csv` (없으면 가나다순으로 한 번 만들고 이후 고정). 이 표와 원본 경로 대응표(`clip_id_map.csv`)는 실명이 있어 Git 제외
-- `team01_clip_manifest.csv`에는 실명이 없음 → Git에 올려 조원 모두 같은 clip_id 사용
-- `review_status` = 3일차 `video_qa.csv` 결과(PASS/REVIEW), 없으면 PENDING
-- ✅ VICON 배우 KHM = `S01` 확정 (스모크 S01과 같은 사람) (`01` 문서 T-01). 같은 사람이 스모크에 있으면 VICON 번호를 스모크 번호로 맞춰야 Subject-wise Split에서 누수가 없음 (후속 작업 11)
+| 파일 | 내용 |
+| --- | --- |
+| `scripts/day04_make_clip_manifest.py` | 원본 이름 → `T01_S##_A##_T##` + manifest (`--apply --link`로 영상 배치) |
+| `scripts/day04_check_team_videos.py` | 영상 존재 · 해상도 · FPS · 길이 표 |
+| `scripts/day04_extract_team_keyframes.py` | clip별 keyframe (얼굴 → Git 제외) |
+| `scripts/day04_build_team_sequences.py` | Frame → YOLO Pose → 38-D + 원본 Keypoint · conf |
+| `scripts/day04_team_sequence_qa.py` | Sequence 성공률 · conf · 튐 → PASS/REVIEW |
+| `scripts/day04_hand_detect_check.py` | 손 검출 가능성 (YOLO 손목 crop → MediaPipe Hand) |
+| `scripts/day04_pose_conf_report.py` | 관절별 YOLO conf 표 |
 
----
+- **Sequence CSV는 확정본** (`reports/team_projects/team01/main/sequences/`) — `--overwrite`로 다시 만들지 않음 (다시 만들면 전체가 바뀐 것으로 잡힘). 새 촬영분만 `--clip-id`로 추가
+- 촬영 보고서: `reports/team_projects/team01/main_shoot_*.md`
 
-## Day 05 - Keypoint QA · Human QA · Subject-wise Split
-
-수업 실습 `scripts/25~32` (6동작 · 18 clip)를 그대로 두고, 같은 흐름을 1조 본 촬영 451개에 맞게 새로 만들었습니다.
-
-### Day 05 Pipeline (1조)
+### 3. QA · Split · 구간 라벨 (5일차 진도)
 
 ```
-STEP 4 Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Human QA (PASS / RESHOOT / EXCLUDE)
+Sequence CSV ─▶ ① 자동 QA (동작별 중요 관절) ─▶ ② Human QA (PASS / RESHOOT / EXCLUDE)
    ─▶ ③ Approved Manifest ─▶ ④ Subject-wise Split ─▶ ⑤ Leakage 검사   (+ Random Frame Split 비교)
 ```
 
-| 실습 | 1조 스크립트 | 출력 (`reports/team_projects/team01/main/dataset/`) |
+| 수업 번호 | 1조 스크립트 | 출력 (`reports/team_projects/team01/main/dataset/`) |
 | --- | --- | --- |
 | 27 | `day05_team_keypoint_qa.py` | `team01_clip_qa.csv` · `team01_clip_review.csv` (다시 돌려도 사람이 적은 결정 유지) |
 | 28 | `day05_team_validate_review.py` | 검사만 (UNREVIEWED · 잘못된 값 · note 없는 CHECK PASS · NO_SEQUENCE) |
 | 29 | `day05_team_approved_manifest.py` | `team01_approved_manifest.csv` (`train_label`: D01~D03 → N00) |
 | 30 | `day05_team_subject_split.py` | `splits/train.csv · val.csv · test.csv · split_counts.csv` |
-| 31 | `day05_team_check_leakage.py` | Subject · clip · 영상 파일 겹침 + 18동작 coverage |
+| 31 | `day05_team_check_leakage.py` | Subject · clip · 영상 파일 겹침 + 동작 coverage |
 | 32 | `day05_team_frame_split_demo.py` | Frame 무작위 분할의 누수 확인 (학습 없음) |
-| — | `day05_team_make_labels.py` · `day05_team_validate_labels.py` | `main/labels/team01_labels.csv` 구간 라벨 자동 초안 (N00 → X → C01 → X → 신호 → X → N00) · V-01~V-10 검사 |
+| — | `day05_team_make_labels.py` · `day05_team_validate_labels.py` | `main/labels/team01_labels.csv` 구간 라벨 (N00 → X → C01 → X → 신호 → X → N00) · V-01~V-10 검사 |
 | — | `day05_team_label_sheet.py` | 라벨 확인용 모아보기 (각자 PC, 얼굴이 보여 Git 제외) |
-| — | `day05_team_make_crosscheck.py` · `day05_team_label_crosscheck.py` | 라벨 교차 검수 10% — 표본 45개 · 1인 9개(자기 영상 제외) 배정 → 검수자 경계 ↔ 자동 라벨 비교(기준 0.2초) → `--apply`로 반영. 모아보기는 `--blind`(라벨 숨김) |
-| — | `day05_team_export_keypoints.py` | Sequence → 5일차 수업 Keypoint CSV 형식 (`data/team_projects/team01/main/keypoints/`, Git 제외) |
-| — | `day05_team_signal_feature_check.py` | 팀 Feature G-01~G-10 라벨별 평균표 `main/features/signal_feature_by_label.csv` |
-| — | `day05_team_make_webcam_log.py` | 촬영 로그 `main/webcam_log.csv` (03 문서 9.1, 카메라 높이 · 거리 · 진행자는 사람이 기입) |
+| — | `day05_team_make_crosscheck.py` · `day05_team_label_crosscheck.py` | 라벨 교차 검수 10% (표본 45개, 기준 0.2초) → `--apply`로 반영 |
+| — | `day05_team_export_keypoints.py` | Sequence → 5일차 Keypoint CSV 형식 (`data/team_projects/team01/main/keypoints/`) |
+| — | `day05_team_signal_feature_check.py` | 팀 Feature G-01~G-10 라벨별 평균표 |
+| — | `day05_team_make_webcam_log.py` | 촬영 로그 `main/webcam_log.csv` |
 
-- 공통 함수 `src/team_dataset_utils.py` · `src/team_label_utils.py` · `src/team_feature_utils.py` (G-01~G-10, 48-D) · 테스트 `tests/test_team_*.py`
-- 분할 설정 `configs/team01_subject_split.json` — Train S01 · S03 · S04 / Validation S05 / Test S02
-- **Sequence CSV는 확정본** — `day04_build_team_sequences.py --overwrite`로 다시 만들지 않음 (다시 만들면 451개 전체가 바뀐 것으로 잡힘). 새 촬영분만 추가
-- 결과 요약 · 4 · 5일차 점검표: `reports/team_projects/team01/team01_data_preparation_report.md`
+- **분할 (`configs/team01_subject_split.json`)**: Train S01 · S03 · S04 (270) / Validation S05 (90) / **Test S02 (90) — 맨 마지막에 한 번만**
+- 결과 요약: `reports/team_projects/team01/team01_data_preparation_report.md`
 
-### 주요 결과 (2026-11-18, 451개 확정)
+### 4. Random Forest 학습 · 평가 (6일차 진도)
 
-- Sequence CSV 451개 확정본 Git 관리 (`reports/team_projects/team01/main/sequences/`, 72,703 Frame · clip 평균 5.4초 · YOLO conf 0.968)
-- 자동 QA: AUTO_PASS 449 · CHECK 2 (manifest REVIEW) → Human QA: PASS 450 · EXCLUDE 1 (`T01_S05_A03_T01`, T06으로 대체)
-- Approved 450 (신호 15개 × 25 · N00 75) → Split Train 270 (S01 · S03 · S04) · Val 90 (S05) · Test 90 (S02) · Leakage check: OK
-- Frame 무작위 분할은 5명 · 450 clip 전부 겹침 → 사람 단위 분할이 필요한 근거
-- 구간 라벨 451 clip 자동 초안 (PASS 448 · REVIEW 2) · 팀 Feature G-01~G-10 확인표 · 5일차 Keypoint CSV 형식 내보내기
-
----
-
-## Day 06 - Action Recognition Baseline 성능평가
-
-수업 실습 `scripts/33~40` — 5일차 Approved 18 clip으로 첫 Action Recognition 모델(Random Forest)을 학습하고 평가했습니다.
-
-### Input
-
-- 5일차 Approved Keypoint Dataset 18 clip (3 Subjects × 6 Actions × 1 Take)
-- S01 → Train · S02 → Validation · S03 → Test
-- Action: bend_return · leg_raise_lower · walk_turn_walk · drink_return · sit_stand · wave
-
-### Day 06 Pipeline
-
+```bash
+uv run python scripts/day05_team_export_keypoints.py           # Keypoint CSV (처음 한 번)
+uv run python scripts/day06_team_build_sequences.py            # 30 Step Sequence (38-D)
+uv run python scripts/day06_team_train_rf.py
+uv run python scripts/day06_team_evaluate.py                   # Validation S05
+# E-01 48-D: 위 세 줄에 --config configs/team01_day06_e01_48d.json
+uv run python scripts/day06_team_compare.py \
+  --configs configs/team01_day06_baseline.json configs/team01_day06_e01_48d.json --seeds 10
+# Test S02는 마지막에 한 번만: day06_team_evaluate.py --split test --final
 ```
-Keypoint CSV ─▶ 38-D Frame Feature ─▶ Sequence Resampling (frame_id 기준 30 Step) ─▶ 1,140-D (Clip 1개 = 1행)
-   ─▶ Random Forest (S01 Train) ─▶ S02 Validation ─▶ 오분류 추적 ─▶ Feature 비교 ─▶ Mini Challenge ─▶ S03 Test (마지막 1번)
-```
-
-### 주요 실행 파일
 
 | 파일 | 내용 | 출력 |
 | --- | --- | --- |
-| `configs/day06_baseline.json` | 30 Step · 최소 유효 Frame 10 · Tree 300 · max_depth null · seed 42 | — |
-| `src/sequence_utils.py` | Frame → 38-D, frame_id 기준 Resampling, 펼치기, 열 이름 | — |
-| `scripts/33_check_day06_inputs.py` | 5일차 Split · Keypoint CSV · Leakage 검사 | `reports/day06/tables/day06_input_check.csv` |
-| `scripts/34_build_sequence_dataset.py` | 18 clip → Sequence Dataset (1,148열 = 메타 8 + 1,140) | `data/day06/sequences/{train,val,test}.csv` |
-| `scripts/35_train_rf_baseline.py` | S01 6행으로 Random Forest 학습 | `artifacts/day06/rf_action_baseline.joblib` · `rf_feature_columns.json` · `rf_training_info.json` |
-| `scripts/36_evaluate_validation.py` | S02 Accuracy · Macro F1 · Confusion Matrix | `reports/day06/metrics/validation_*` |
-| `scripts/37_analyze_misclassified.py` | 오분류 clip에 원본 MP4 · Keypoint 경로 연결 | `reports/day06/misclassified/` |
-| `scripts/38_compare_static_vs_sequence.py` | 가운데 Frame 1개(38) vs 30 Step(1,140) | `reports/day06/experiments/static_vs_sequence.csv` |
-| `scripts/39_compare_feature_sets.py` | 좌표+각도(1,140) vs 좌표만(1,020) | `reports/day06/experiments/feature_set_comparison.csv` |
-| `scripts/40_evaluate_test.py` | 최종 조건으로 S03 Test 1번 | `reports/day06/metrics/test_*` |
+| `day06_team_build_sequences.py` | 입력 검사 + clip → 30 Step Sequence (38-D = 1,140열, 48-D = 1,440열) | `data/.../main/day06/sequences/[run/]{split}.csv` |
+| `day06_team_train_rf.py` | RF (Tree 300 · class_weight balanced · seed 42) | `artifacts/team01/day06/[run/]` |
+| `day06_team_evaluate.py` | Accuracy · Macro F1 · 클래스별 · 오분류 · Confusion Matrix (`--split test`는 `--final` 필수) | `reports/.../main/day06/[run/]` |
+| `day06_team_compare.py` | 두 설정 비교 · 바뀐 clip · seed 반복 평균 (Test 사용 안 함) | `reports/.../main/day06/compare/` |
 
-### 주요 결과 (내 실행, 2026-11-19)
+**Validation S05 결과 (A04 재촬영 반영, 결정 기록 D6)**
 
-| 실험 | Feature | Accuracy | Macro F1 |
+| Feature | Accuracy | Macro F1 | seed 10회 평균 Acc |
 | --- | --- | --- | --- |
-| Baseline Validation (S02) | 1,140 | 0.5000 | 0.4444 |
-| Static (가운데 Frame) | 38 | 0.6667 | 0.5556 |
-| Coordinates Only | 1,020 | 1.0000 | 1.0000 |
-| Mini Challenge 15 Step | 570 | 0.6667 | 0.5833 |
-| **Final Test (S03)** | 1,140 | **1.0000** | **1.0000** |
+| 38-D (Baseline) | 0.9333 | 0.9450 | 0.909 |
+| 48-D (E-01) | 0.922 | — | 0.922 |
 
-- Baseline 오분류: walk_turn_walk → leg_raise_lower · drink_return → wave · wave → drink_return
-- 교재 결과(0.6667 / 0.5556)와 다른 이유: 5일차 Keypoint 추출 값 차이. Validation 6개라 clip 1개 = 0.1667
-- 최종 조건은 원래 Baseline(30 Step · 좌표+각도) 유지. Test 결과를 보고 조건을 다시 바꾸지 않음
-- Confidence 0.20~0.37 — 아주 작은 교육용 Dataset이라 이 숫자를 현업 성능으로 해석하지 않음
-- 정리: [`reports/day06/day06_summary.md`](reports/day06/day06_summary.md)
-
-### Mini Challenge
-
-`sequence_steps` 하나만 30 → 15로 바꿔 S02 Validation 비교 → 0.5000 / 0.4444 → 0.6667 / 0.5833 (wave 정답으로 바뀜, 맞다가 틀린 clip 없음).
-clip 1개 차이라 일반화하지 않고, 실험 후 30 Step으로 되돌림.
-자세한 내용: [`reports/day06/challenge/mini_challenge_result.md`](reports/day06/challenge/mini_challenge_result.md)
-
-### Git 제외
-
-`data/day06/` · `*.joblib` · `reports/day06/` 자동 생성 csv · Confusion Matrix png (`artifacts/`는 json 2개만 `git add -f`)
-
-### 다음 수업
-
-7일차에는 실시간 Frame을 계속 모아 Sliding Window를 만들고 실시간 Action Recognition으로 연결합니다.
+- 남은 오류: N00(D03 뒷머리 긁기) → A11 · A14, A04 T02 → A06, A07 → A05
+- E-01 채택은 보류 (D7), 좌우 반전 규칙 미결정 (D8)
 
 ---
 
-## 1조 프로젝트 — 농구 심판 수신호 인식 → 전광판
-
-수업 Pipeline을 농구 심판의 파울 수신호 15개 인식에 적용하는 조 프로젝트입니다.
+## 설계 문서 · 기록
 
 | 경로 | 내용 |
 | --- | --- |
-| `docs/referee/00_배포노트.md` | 배포별 변경 요약 · 회의 안건 · 버전 규칙 (현재 2차 배포 = 문서 전체 v2.0) |
-| `docs/referee/01_관절_매핑_명세.md` | VICON → COCO 17(+손등 2) 관절 매핑, 결정 사항 D1~D6 |
-| `docs/referee/02_라벨링_가이드.md` | 신호 클래스(A01~A15, C01, N00) 라벨링 규칙 |
+| `docs/referee/00_배포노트.md` | 배포별 변경 요약 · 회의 안건 · 버전 규칙 |
+| `docs/referee/01_관절_매핑_명세.md` | VICON → COCO 17(+손등 2) 관절 매핑, 결정 D1~D6 |
+| `docs/referee/02_라벨링_가이드.md` | 신호 클래스 · 구간 라벨 · 교차 검수 규칙 |
 | `docs/referee/03_웹캠_촬영_계획서.md` | 웹캠 촬영 계획 |
-| `docs/referee/04_특징_모델_설계서.md` | Feature · 모델 설계 |
-| `docs/referee/05_시스템_아키텍처.md` | 실시간 시스템 구성 (웹캠 → FastAPI → 화면), API, 디렉터리 |
-| `docs/referee/doc_versions.csv` | 설계 문서 버전 기록 (버전 · 날짜 · 작성자 · 커밋 · 내용) |
-| `scripts/vicon_00_make_take_log.py` · `vicon_01_extract_3d_json.py` | VICON 촬영 파일 정리, GLB → 3D JSON 추출 |
-| `scripts/referee_00~04_*.py` · `reports/referee/smoke/` | 간이 검증용 스모크 테스트 (본 Pipeline 아님) |
-| `scripts/day04_hand_detect_check.py` · `reports/team_projects/team01/hand_detect_report.md` | 손 검출 가능성 실험 (YOLO 손목 crop → MediaPipe Hand Landmarker, D1 재검토 근거) |
-| `configs/team01_main_manifest.csv` · `reports/team_projects/team01/main_shoot_1117_report.md` | 본 촬영 manifest (세로 1080×1920, `capture_set = main_1117`) · 1차 촬영 결과 (S01·S05 73개, PASS 72 · REVIEW 1) |
-| `reports/team_projects/team01/main_shoot_1117_2_report.md` | 본 촬영 2차 결과 (S01·S05 T03~T05 108개 → S01·S05 완료, 누적 181개, PASS 179 · REVIEW 2) |
-| `reports/team_projects/team01/main_shoot_1118_s04_report.md` | 본 촬영 3차 결과 (S04 90개, 원본 전송 · 4K → 1080×1920 30 FPS 변환, 누적 271개) |
-| `reports/team_projects/team01/main_shoot_1118_s02_s03_report.md` | 본 촬영 4차 결과 (S02 90 · S03 80개 + 6장 S03 A12 · A13 보충 10개 → 누적 451개, 본 촬영 끝) |
-| `reports/team_projects/team01/team01_data_preparation_report.md` | 4일차 ⑧ 결과 보고서 + 5일차 Summary (QA · Human QA · Split · 4 · 5일차 점검표) |
-| `daily_csv/` | 날짜별 작업 기록 CSV (11-13~) + `index.csv` 요약. 쓰는 법은 `daily_csv/README.md` |
-| `docs/referee/team01_decision_log.md` | 1조 결정 기록 한 장 (회의 · 촬영 · QA · Split · 라벨 결정 A1~C10) |
-| `scripts/day04_pose_conf_report.py` | STEP 4 Sequence CSV → YOLO 관절별 conf 표 (관절 · clip · 사람×동작 CSV + Markdown 요약), STEP 2~5 다음에 실행 |
-| `configs/team01_action_classes.csv` | 신호 A01~A15 · C01 · N00 + 일상 동작 D01 휘슬 · D02 팔짱 · D03 뒷머리 (학습 때 N00) |
+| `docs/referee/04_특징_모델_설계서.md` | Feature · 모델 설계, 실험 E-01~E-06 |
+| `docs/referee/05_시스템_아키텍처.md` | 실시간 시스템 (웹캠 → FastAPI → 화면), API, 디렉터리 |
+| `docs/referee/doc_versions.csv` | 설계 문서 버전 기록 |
+| `docs/referee/team01_decision_log.md` | 1조 결정 기록 (A1~ · B1~ · C1~ · D1~) |
+| `docs/rgb_video_capture_log.md` | RGB 영상 촬영 기록 |
+| `scripts/vicon_00_make_take_log.py` · `vicon_01_extract_3d_json.py` · `reports/vicon/` | VICON 촬영 파일 정리, GLB → 3D JSON |
+| `reports/team_projects/team01/hand_detect_report.md` | 손 검출 실험 (D1 재검토 근거) |
+| `daily_csv/` | 날짜별 작업 기록 + `index.csv`. 쓰는 법은 `daily_csv/README.md` |
+
+## 작업 방식
+
+- 각자 브랜치에서 작업 → PR → `main` merge (main에 바로 push 하지 않기)
+- 브랜치에 main 변경 받기: `git fetch origin && git merge origin/main`
+- 커밋 메시지는 한글 (`feat:` · `fix:` · `docs:` · `test:` · `data:` · `label:` · `chore:`)
+- 레포에는 S 번호만 사용 (실명 · 얼굴 나온 영상/사진 금지)
