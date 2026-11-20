@@ -39,13 +39,15 @@ KH_Project_Subject1010/
 │   ├── project.json               # 모델명 · 이미지 크기 · Confidence 기준 · 장치   (1일차)
 │   ├── action_classes.csv         # 6개 Action ID · Label · MP4 이름                (4일차)
 │   ├── day05_subject_split.json   # Train S01 · Validation S02 · Test S03           (5일차)
-│   └── day06_baseline.json        # 30 Step · Random Forest 설정                    (6일차)
+│   ├── day06_baseline.json        # 30 Step · Random Forest 설정                    (6일차)
+│   └── day07_realtime.json        # Window · Confidence · Stabilization 설정         (7일차)
 ├── src/
 │   ├── common.py                  # 설정 읽기 · GPU/CPU 선택      (1일차)
 │   ├── pose_utils.py              # COCO 17 이름 · Skeleton · 품질 판정 (2일차)
 │   ├── feature_utils.py           # 관절각도 · 정규화 · 좌우 반전   (3일차)
-│   └── sequence_utils.py          # 38-D Frame Feature · Resampling (6일차)
-├── scripts/                       # 00~40 수업 순서대로 실행
+│   ├── sequence_utils.py          # 38-D Frame Feature · Resampling (6일차)
+│   └── realtime_utils.py          # Sliding Window · 실시간 예측 · 안정화 (7일차)
+├── scripts/                       # 00~45 수업 순서대로 실행
 ├── tests/                         # 단위 테스트 (YOLO·GPU 없이 실행)
 ├── reports/                       # 일차별 결과 (CSV·이미지는 Git 제외)
 └── artifacts/day06/               # 6일차 모델 정보 json (joblib은 Git 제외)
@@ -70,7 +72,8 @@ data/
 ├── day05/
 │   ├── videos/S01~S03/S0x_A00x_T01.mp4     # 강사님 제공 18개
 │   ├── keypoints/ · manifests/ · qa/ · splits/   # 26~30번 실행 결과
-└── day06/sequences/                        # 34번 실행 결과
+├── day06/sequences/                        # 34번 실행 결과
+└── day07/challenge/team01/videos/          # Mini Challenge 입력 MP4 (S91_A003_T01.mp4)
 ```
 
 - 강사님 제공 파일은 수업 자료에서 받아요.
@@ -467,3 +470,65 @@ clip 1개 차이라 일반화하지 않고, 실험 후 30 Step으로 되돌림.
 ### 다음 수업
 
 7일차에는 실시간 Frame을 계속 모아 Sliding Window를 만들고 실시간 Action Recognition으로 연결합니다.
+
+---
+
+## Day 07 - Sliding Window & IP Webcam Realtime Action
+
+수업 실습 `scripts/41~45` — 6일차 Random Forest를 저장 MP4와 IP Webcam의 연속 Frame에 연결해 실시간 Action Recognition Pipeline을 만들었습니다. 새 모델은 학습하지 않았습니다.
+
+### Input
+
+- 6일차 Random Forest (`artifacts/day06/rf_training_info.json`: S01 6 clip · 30 Step · 1,140 Feature)
+- S02 Validation MP4 (저장영상 실습)
+- 스마트폰 IP Webcam Stream
+- Mini Challenge: 5일차 S03 `walk_turn_walk` 영상을 `S91_A003_T01.mp4`로 복사해 사용 (직접 촬영 대신)
+
+> Mini Challenge 영상은 새 Train Dataset이 아니라 학습된 모델을 확인하는 Runtime 입력입니다.
+
+### Day 07 Runtime Pipeline
+
+```
+Saved MP4 / IP Webcam ─▶ YOLO Pose ─▶ 38-D Frame Feature ─▶ Timed Sliding Window (최근 5초)
+   ─▶ 6일차 Sequence Steps(30)로 Resampling ─▶ Random Forest ─▶ Raw Prediction
+   ─▶ Confidence Threshold (0.55 미만 → UNKNOWN) ─▶ Stabilization (최근 5개 중 3표) ─▶ Stable Action
+```
+
+### 주요 실행 파일
+
+| 파일 | 내용 | 출력 |
+| --- | --- | --- |
+| `configs/day07_realtime.json` | Window 5초 · fill 0.8 · 유효 Feature 60%·10개 · 0.25초 갱신 · Threshold 0.55 · Buffer 5 / 3표 | — |
+| `src/realtime_utils.py` | Frame Feature · Sliding Window · Sequence 변환 · 예측 · 안정화 공통 함수 | — |
+| `scripts/41_check_day07_inputs.py` | 6일차 모델 · 학습정보 · S02 MP4 · Runtime 설정 검사 | `reports/day07/tables/day07_input_check.csv` |
+| `scripts/42_realtime_action_video.py` | 저장 MP4를 Frame Stream처럼 처리 | `reports/day07/saved_video/` (MP4 · CSV) |
+| `scripts/43_summarize_realtime_runs.py` | 42번 실행 기록 설정별 비교 | `reports/day07/realtime_run_summary.csv` |
+| `scripts/44_ip_webcam_action_realtime.py` | IP Webcam 실시간 동작 인식 (숫자 키로 Target 표시, Q 종료) | `reports/day07/ip_webcam/ip_webcam_*.csv` |
+| `scripts/45_analyze_ip_webcam_log.py` | 44번 로그 요약 | `reports/day07/ip_webcam/ip_webcam_runtime_summary.csv` |
+
+### 주요 결과 (내 실행, 2026-11-20)
+
+| 입력 | Prediction | UNKNOWN | 평균 Confidence | Processing FPS |
+| --- | --- | --- | --- | --- |
+| 저장영상 S02 (기본 설정 w5_c0.55_s5, walk_turn_walk) | 21회 | 100% | 0.23 | 80.0 |
+| IP Webcam (사람 없이 실행 — 참고용) | 112회 | 100% | 0.23 | 28.6 |
+| Mini Challenge S91 walk_turn_walk (w5_c0.55_s5) | 24회 | 100% | 0.22 | 80.0 |
+
+- Pipeline은 정상 동작했지만 모든 실행이 UNKNOWN — 6일차 모델이 S01 6 clip만으로 학습해서 처음 보는 사람에게 Confidence가 낮음
+- Threshold 0.40, Window 2·3초, Buffer 3·7로 바꿔도 UNKNOWN 그대로 (Confidence가 0.40보다도 낮음)
+- IP Webcam FPS가 낮은 건 1920×1080 Stream · Wi-Fi 쪽 원인으로 판단 (같은 모델로 저장영상은 약 77~80 FPS)
+- 정리: [`reports/day07/day07_summary.md`](reports/day07/day07_summary.md) · [`runtime_comparison.md`](reports/day07/runtime_comparison.md) · [`fps_test.md`](reports/day07/fps_test.md)
+
+### Mini Challenge
+
+Confidence Threshold 하나만 0.55 → 0.40으로 바꿔 같은 MP4 비교 → unknown_ratio 1.0 → 1.0 (변화 없음).
+IP Webcam은 사물만 비춘 상태로 실행해서 동작 인식 결과는 참고용입니다.
+자세한 내용: [`reports/day07/challenge/team01/mini_challenge_summary.md`](reports/day07/challenge/team01/mini_challenge_summary.md)
+
+### Git 제외
+
+`data/day07/` · Runtime MP4 · Frame별 Runtime CSV · IP Webcam CSV · 요약 CSV (`reports/day07/` 안에서는 md만 올림)
+
+### 다음 수업
+
+8일차에는 Tracking을 추가해서 Frame이 바뀌어도 같은 사람을 계속 추적하는 구조로 확장합니다.

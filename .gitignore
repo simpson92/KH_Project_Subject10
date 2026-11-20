@@ -72,3 +72,15 @@ reports/day06/tables/*.csv
 reports/day06/metrics/*.csv
 reports/day06/misclassified/*.csv
 reports/day06/experiments/*.csv
+
+# Generated Day07 runtime outputs (data/day07/ 와 *.mp4는 위 규칙으로 이미 제외)
+reports/day07/tables/*.csv
+reports/day07/saved_video/
+reports/day07/ip_webcam/*.csv
+reports/day07/realtime_run_summary.csv
+
+# Generated Day07 Mini Challenge outputs
+reports/day07/challenge/team*/saved_video/
+reports/day07/challenge/team*/ip_webcam/*.csv
+reports/day07/challenge/team*/saved_video_comparison.csv
+reports/day07/challenge/team*/ip_webcam_summary.csv
