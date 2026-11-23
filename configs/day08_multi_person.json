@@ -1,0 +1,4 @@
+{
+  "tracker": "bytetrack.yaml",
+  "lost_timeout_seconds": 2.0
+}

@@ -84,3 +84,14 @@ reports/day07/challenge/team*/saved_video/
 reports/day07/challenge/team*/ip_webcam/*.csv
 reports/day07/challenge/team*/saved_video_comparison.csv
 reports/day07/challenge/team*/ip_webcam_summary.csv
+
+# Generated Day08 outputs (data/ · *.mp4 · *.joblib은 이미 제외)
+reports/day08/tables/*.csv
+reports/day08/tracking/
+reports/day08/logs/*.csv
+reports/day08/ip_webcam/*.csv
+reports/day08/experiments/*.csv
+reports/day08/challenge/tracking/
+reports/day08/challenge/logs/*.csv
+reports/day08/challenge/ip_webcam/*.csv
+reports/day08/challenge/challenge_ip_multi_summary.csv
